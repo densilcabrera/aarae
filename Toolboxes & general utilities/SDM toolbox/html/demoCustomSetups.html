@@ -1,0 +1,457 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>demoCustomSetups</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-04-27"><meta name="DC.source" content="demoCustomSetups.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Example usage of SDM toolbox for analysis, synthesis, and multi-channel reproduction.</a></li><li><a href="#2">Load the impulse response and the source signal</a></li><li><a href="#3">Read the data</a></li><li><a href="#4">Create SDM struct for analysis with a set of parameters</a></li><li><a href="#5">Calculate the SDM coefficients</a></li><li><a href="#6">Create visualization struct with the given parameters</a></li><li><a href="#7">Create a struct for visualization with a set of parameters</a></li><li><a href="#8">Draw analysis parameters and impulse responses</a></li><li><a href="#9">Draw time-frequency visualization</a></li><li><a href="#10">Draw the spatiotemporal visualization</a></li><li><a href="#11">Create synthesis struct with the given parameters</a></li><li><a href="#12">Synthesize the spatial impulse response with NLS</a></li><li><a href="#13">Convolution with the source signal</a></li><li><a href="#14">Saving the auralization to a file</a></li><li><a href="#15">Playback using Matlab or other applications</a></li></ul></div><h2>Example usage of SDM toolbox for analysis, synthesis, and multi-channel reproduction.<a name="1"></a></h2><p>The data are room impulse responses from left and right channel of a a home theater system.</p><pre class="codeinput"><span class="comment">% SDM toolbox : demoCustomSetups</span>
+<span class="comment">% Sakari Tervo &amp; Jukka P&auml;tynen, Aalto University, 2016</span>
+<span class="comment">% Sakari.Tervo@aalto.fi and Jukka.Patynen@aalto.fi</span>
+</pre><h2>Load the impulse response and the source signal<a name="2"></a></h2><p>1s long impulse response measured at 192 kHz IRs contains left and right channels loudspeakers are large size active loudspeakers ( Genelec <a href="something">something</a> ) Distance to loudspeakers about &gt; 2 meters</p><pre class="codeinput"><span class="comment">% Download a spatial room impulse response</span>
+ir_filename = <span class="string">'IR_another_living_room'</span>;
+<span class="keyword">if</span> ~exist([ir_filename <span class="string">'.mat'</span>],<span class="string">'file'</span>)
+     disp([<span class="string">'Downloading an example IR '</span> ir_filename <span class="string">' from the database.'</span>])
+    url_ir = [<span class="string">'https://mediatech.aalto.fi/~tervos/'</span> ir_filename <span class="string">'.mat'</span>];
+    websave([ir_filename <span class="string">'.mat'</span>],url_ir);
+<span class="keyword">end</span>
+<span class="comment">% Download a stereofile (originally from free music archive)</span>
+audio_filename = <span class="string">'paper_navy_swan_song'</span>;
+<span class="keyword">if</span> ~exist([audio_filename ,<span class="string">'.mp3'</span>],<span class="string">'file'</span>)
+    disp(<span class="string">'Downloading an example music file from free music archive.'</span>)
+    url_of_the_song = <span class="string">'https://mediatech.aalto.fi/~tervos/demoJAES/samples/Song1_CR1.mp3'</span>;
+    outfilename = websave([audio_filename <span class="string">'.mp3'</span>],url_of_the_song);
+<span class="keyword">end</span>
+
+<span class="comment">% If websave not supported, you have to download IRs and source signals</span>
+<span class="comment">% manually from the urls given below</span>
+<span class="comment">% 'https://mediatech.aalto.fi/~tervos/IR_another_living_room.mat'</span>
+<span class="comment">% 'https://mediatech.aalto.fi/~tervos/demoJAES/samples/Song1_CR1.mp3'</span>
+</pre><pre class="codeoutput">Downloading an example IR IR_another_living_room from the database.
+</pre><h2>Read the data<a name="3"></a></h2><p>Read impulse response</p><pre class="codeinput">load([ir_filename <span class="string">'.mat'</span>])
+<span class="comment">% Read stereo signal</span>
+S = audioread([audio_filename <span class="string">'.mp3'</span>]);
+</pre><h2>Create SDM struct for analysis with a set of parameters<a name="4"></a></h2><p>Parameters required for the calculation load default values for all parameters Set your own values for some parameters</p><pre class="codeinput">Radius = 0.025/2;   <span class="comment">% Radius of the microphones [m]</span>
+micArray = <span class="keyword">...</span><span class="comment">      % Microphone positions in Cartesian coordinates [m]</span>
+    [Radius 0 0;
+    -Radius 0 0;
+    0 Radius 0;
+    0 -Radius 0;
+    0 0 Radius;
+    0 0 -Radius];
+c = 345;            <span class="comment">% Assumed speed of sound [m/s]</span>
+fs = 192e3;         <span class="comment">% Sampling frequency [Hz]</span>
+winLen = 0;         <span class="comment">% Use the minimum frame size [samples]</span>
+parframes = 2^14;   <span class="comment">% Number of parallel frames in the processing [.]</span>
+showMicArray = true;<span class="comment">% Show the applied microphone array geometry</span>
+
+a = createSDMStruct(<span class="string">'micLocs'</span>,micArray,<span class="string">'winLen'</span>,winLen,<span class="keyword">...</span>
+    <span class="string">'c'</span>,c,<span class="string">'fs'</span>,fs,<span class="string">'parFrames'</span>,parframes,<span class="keyword">...</span>
+    <span class="string">'showArray'</span>,showMicArray);
+<span class="comment">% struct a can also be modified later for other parameters</span>
+</pre><pre class="codeoutput">User-defined SDM Settings are used :
+           fs: 192000
+            c: 345
+       winLen: 0
+    parFrames: 16384
+    showArray: 1
+      micLocs: [6x3 double]
+
+</pre><h2>Calculate the SDM coefficients<a name="5"></a></h2><p>Solve the DOA of each time window assuming wide band reflections, white noise in the sensors and far-field (plane wave propagation model inside the array)</p><pre class="codeinput">DOA{1} = SDMPar(ir_left, a);
+
+<span class="comment">% Here we are using the top-most microphone as the estimate for the</span>
+<span class="comment">% pressure in the center of the array</span>
+P{1} = ir_left(:,5);
+
+<span class="comment">% Same for right channel</span>
+a.showArray = false; <span class="comment">% Don't show the microphone array again</span>
+DOA{2} = SDMPar(ir_right, a);
+P{2} = ir_right(:,5);
+</pre><pre class="codeoutput">Started SDM processing
+Using frame size 36
+Ended SDM processing in 5.9826 seconds.
+Started SDM processing
+Using frame size 36
+Ended SDM processing in 5.7805 seconds.
+</pre><img vspace="5" hspace="5" src="demoCustomSetups_01.png" alt=""> <h2>Create visualization struct with the given parameters<a name="6"></a></h2><pre class="codeinput">plane = <span class="string">'lateral'</span>; <span class="comment">% visualization plane</span>
+DOI = <span class="string">'backward'</span>; <span class="comment">% direction of integration</span>
+plotStyle = <span class="string">'fill'</span>; <span class="comment">% plotting style, fill or line</span>
+name = <span class="string">'Home Theater'</span>; <span class="comment">% title</span>
+res = 1; <span class="comment">% DOA resolution of the polar response</span>
+t = [0 2 5 20]; <span class="comment">% time indices of interest</span>
+colors = parula(length(t)); <span class="comment">% colormap</span>
+dBSpacing = -12:6:0; <span class="comment">% resolution of the dB grid</span>
+DOASpacing = 30; <span class="comment">% resolution of the DOA grid</span>
+lw = zeros(size(t)); <span class="comment">% no line</span>
+showGrid = true; <span class="comment">% grid in the visualization</span>
+dBDynamics = 42; <span class="comment">% dynamics in dB</span>
+</pre><h2>Create a struct for visualization with a set of parameters<a name="7"></a></h2><pre class="codeinput">v = createVisualizationStruct(<span class="string">'fs'</span>,fs,<span class="keyword">...</span>
+    <span class="string">'Plane'</span>,plane,<span class="string">'DOI'</span>,DOI,<span class="string">'name'</span>,name,<span class="string">'res'</span>,res,<span class="keyword">...</span>
+    <span class="string">'dBSpacing'</span>,dBSpacing,<span class="string">'Colors'</span>,colors,<span class="string">'DOASpacing'</span>,DOASpacing,<span class="keyword">...</span>
+    <span class="string">'linewidth'</span>,lw,<span class="string">'Showgrid'</span>,showGrid,<span class="string">'PlotStyle'</span>,plotStyle,<span class="keyword">...</span>
+    <span class="string">'t'</span>,t); <span class="comment">% Load default values</span>
+<span class="comment">% struct v can also be modified later for other parameters</span>
+<span class="comment">% e.g. v.t = [0 5 10 200]</span>
+<span class="comment">% For visualization purposes, set the text interpreter to latex</span>
+set(0,<span class="string">'DefaultTextInterpreter'</span>,<span class="string">'latex'</span>)
+</pre><pre class="codeoutput">createVisualizationStruct : User-defined visualization settings are used :
+              fs: 192000
+           plane: 'lateral'
+             DOI: 'backward'
+       plotStyle: 'fill'
+            name: 'Home Theater'
+             res: 1
+               t: [0 2 5 20]
+          colors: [4x3 double]
+       dBSpacing: [-12 -6 0]
+      DOASpacing: 30
+      dBDynamics: 45
+       linewidth: [0 0 0 0]
+        showGrid: 1
+    smoothMethod: 'average'
+       smoothRes: 3
+
+</pre><h2>Draw analysis parameters and impulse responses<a name="8"></a></h2><pre class="codeinput">parameterVisualization(P, v);
+</pre><pre class="codeoutput">Started visualization of parameters.
+Ended visualization of parameters in 0.16714 seconds.
+</pre><img vspace="5" hspace="5" src="demoCustomSetups_02.png" alt=""> <h2>Draw time-frequency visualization<a name="9"></a></h2><p>Drawing only the lateral plane</p><pre class="codeinput">timeFrequencyVisualization(P, v)
+</pre><pre class="codeoutput">Started time-frequency visualization.
+Ended time-frequency visualization in 7.2408 seconds.
+</pre><img vspace="5" hspace="5" src="demoCustomSetups_03.png" alt=""> <h2>Draw the spatiotemporal visualization<a name="10"></a></h2><pre class="codeinput">spatioTemporalVisualization(P, DOA, v)
+</pre><pre class="codeoutput">Started spatio-temporal visualization.
+Ended spatio-temporal visualization in 2.3151 seconds.
+</pre><img vspace="5" hspace="5" src="demoCustomSetups_04.png" alt=""> <h2>Create synthesis struct with the given parameters<a name="11"></a></h2><p>Using 5.0 loudpseaker setup with uneven distance for the loudspeakers</p><pre class="codeinput">lspLocs(:,1:2) = <span class="keyword">...</span>
+    [0 0
+    -30 0
+    +30 0
+    -110 0
+    +110 0];
+lspLocs(:,3) = [2 2.5 2 1.5 1.5]; <span class="comment">% Distances are not equal</span>
+
+s = createSynthesisStruct(<span class="string">'lspLocs'</span>,lspLocs,<span class="string">'snfft'</span>,length(P{1}) ,<span class="keyword">...</span>
+    <span class="string">'ShowArray'</span>,true,<span class="string">'fs'</span>,fs,<span class="string">'c'</span>,343,<span class="keyword">...</span>
+    <span class="string">'LFEchannel'</span>,[]);
+<span class="comment">% struct s can also be modified later for other parameters</span>
+</pre><pre class="codeoutput">createSynthesisStruct:  No LFE channel
+createSynthesisStruct: User-defined settings are :
+                fs: 192000
+                 c: 343
+    dimensionality: 3
+             snfft: 192000
+         showArray: 1
+            Radius: 2
+         LFEcutOff: 80
+          Binaural: 0
+           HRTFset: 3
+                 g: [384000x10 double]
+                f1: [10x1 double]
+               Blp: [2.2371e-09 6.7112e-09 6.7112e-09 2.2371e-09]
+               Alp: [1 -2.9948 2.9895 -0.9948]
+               Bhp: [0.9974 -2.9922 2.9922 -0.9974]
+               Ahp: [1 -2.9948 2.9895 -0.9948]
+           lspLocs: [5x3 double]
+        LFEchannel: []
+
+</pre><h2>Synthesize the spatial impulse response with NLS<a name="12"></a></h2><pre class="codeinput">H = cell(1,2);
+<span class="keyword">for</span> channel = 1:2
+    H{channel} = synthesizeSDMCoeffs(P{channel},DOA{channel}, s);
+    s.showArray = false; <span class="comment">% Don't show the loudspeaker array again</span>
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">Started synthesizing
+equalizeNLS: processing frame : 1000
+equalizeNLS: processing frame : 1000
+equalizeNLS: processing frame : 2000
+equalizeNLS: processing frame : 3000
+Ended synthesizing in 5.0347 seconds.
+Started synthesizing
+equalizeNLS: processing frame : 1000
+equalizeNLS: processing frame : 1000
+equalizeNLS: processing frame : 2000
+equalizeNLS: processing frame : 3000
+Ended synthesizing in 4.7818 seconds.
+</pre><img vspace="5" hspace="5" src="demoCustomSetups_05.png" alt=""> <h2>Convolution with the source signal<a name="13"></a></h2><p>Choose 10 seconds and resample</p><pre class="codeinput">Sr = resample(S(1:44.e3*10,:),480,441);
+numOfLsp = size(s.lspLocs,1);
+Y = zeros(size(Sr,1),numOfLsp);
+
+<span class="comment">% Resample H to 48e3 [Hz] sampling frequency for auralization</span>
+H{1} = resample(H{1},1,4);
+H{2} = resample(H{2},1,4);
+
+<span class="keyword">for</span> channel = 1:2;
+    <span class="keyword">for</span> lsp = 1:numOfLsp
+        <span class="comment">% Convolution with Matlab's overlap-add</span>
+        Y(:,lsp) = Y(:,lsp) +  fftfilt(H{channel}(:,lsp),Sr(:,channel));
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+<span class="comment">% Y contains the auralization of the spatial IRs with S</span>
+</pre><h2>Saving the auralization to a file<a name="14"></a></h2><p>Save the file to the default folder with a custom filename. Save the result as wav, as wav can handle upto 256 channels.</p><pre class="codeinput">disp(<span class="string">'Started Auralization'</span>);tic
+savename = [ir_filename <span class="string">'_'</span> audio_filename <span class="string">'.wav'</span>];
+<span class="keyword">if</span> max(abs(Y(:))) &gt; 1
+    Y = Y/max(abs(Y(:)))*.9;
+    disp(<span class="string">'Sound normalized, since otherwise would have clipped'</span>)
+<span class="keyword">end</span>
+disp([<span class="string">'Ended Auralization in '</span> num2str(toc) <span class="string">' seconds.'</span>])
+disp(<span class="string">'Started writing the auralization wav file'</span>)
+disp([savename  <span class="string">' on the disk.'</span>]);tic
+audiowrite(savename,Y,s.fs/4)
+info = audioinfo(savename);
+disp(<span class="string">'Wrote ... '</span>);
+disp(info)
+disp([<span class="string">'... in '</span> num2str(toc) <span class="string">' seconds'</span>])
+</pre><pre class="codeoutput">Started Auralization
+Sound normalized, since otherwise would have clipped
+Ended Auralization in 0.021173 seconds.
+Started writing the auralization wav file
+IR_another_living_room_paper_navy_swan_song.wav on the disk.
+Wrote ... 
+             Filename: 'C:\Users\tervos\Desktop\SDMtoolbox\release\IR_anot...'
+    CompressionMethod: 'Uncompressed'
+          NumChannels: 5
+           SampleRate: 48000
+         TotalSamples: 478912
+             Duration: 9.9773
+                Title: []
+              Comment: []
+               Artist: []
+        BitsPerSample: 16
+
+... in 0.10532 seconds
+</pre><h2>Playback using Matlab or other applications<a name="15"></a></h2><pre class="codeinput"><span class="comment">% &lt;--- EOF demoBinauralRendering.m</span>
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Example usage of SDM toolbox for analysis, synthesis, and multi-channel reproduction.
+% The data are room impulse responses from left and right channel of a 
+% a home theater system.
+
+% SDM toolbox : demoCustomSetups
+% Sakari Tervo & Jukka Pätynen, Aalto University, 2016
+% Sakari.Tervo@aalto.fi and Jukka.Patynen@aalto.fi
+
+%% Load the impulse response and the source signal
+% 1s long impulse response measured at 192 kHz
+% IRs contains left and right channels
+% loudspeakers are large size active loudspeakers ( Genelec <something> )
+% Distance to loudspeakers about > 2 meters
+
+% Download a spatial room impulse response
+ir_filename = 'IR_another_living_room';
+if ~exist([ir_filename '.mat'],'file')
+     disp(['Downloading an example IR ' ir_filename ' from the database.'])
+    url_ir = ['https://mediatech.aalto.fi/~tervos/' ir_filename '.mat'];
+    websave([ir_filename '.mat'],url_ir);
+end
+% Download a stereofile (originally from free music archive)
+audio_filename = 'paper_navy_swan_song';
+if ~exist([audio_filename ,'.mp3'],'file')
+    disp('Downloading an example music file from free music archive.')
+    url_of_the_song = 'https://mediatech.aalto.fi/~tervos/demoJAES/samples/Song1_CR1.mp3';
+    outfilename = websave([audio_filename '.mp3'],url_of_the_song);
+end
+
+% If websave not supported, you have to download IRs and source signals
+% manually from the urls given below
+% 'https://mediatech.aalto.fi/~tervos/IR_another_living_room.mat'
+% 'https://mediatech.aalto.fi/~tervos/demoJAES/samples/Song1_CR1.mp3'
+
+%% Read the data
+% Read impulse response
+load([ir_filename '.mat'])
+% Read stereo signal
+S = audioread([audio_filename '.mp3']);
+
+%% Create SDM struct for analysis with a set of parameters
+% Parameters required for the calculation
+% load default values for all parameters
+% Set your own values for some parameters
+Radius = 0.025/2;   % Radius of the microphones [m]
+micArray = ...      % Microphone positions in Cartesian coordinates [m]
+    [Radius 0 0;
+    -Radius 0 0;
+    0 Radius 0;
+    0 -Radius 0;
+    0 0 Radius;
+    0 0 -Radius];
+c = 345;            % Assumed speed of sound [m/s]
+fs = 192e3;         % Sampling frequency [Hz]
+winLen = 0;         % Use the minimum frame size [samples]
+parframes = 2^14;   % Number of parallel frames in the processing [.]
+showMicArray = true;% Show the applied microphone array geometry
+
+a = createSDMStruct('micLocs',micArray,'winLen',winLen,...
+    'c',c,'fs',fs,'parFrames',parframes,...
+    'showArray',showMicArray);
+% struct a can also be modified later for other parameters
+
+%% Calculate the SDM coefficients
+% Solve the DOA of each time window assuming wide band reflections, white
+% noise in the sensors and far-field (plane wave propagation model inside the array)
+DOA{1} = SDMPar(ir_left, a);
+
+% Here we are using the top-most microphone as the estimate for the
+% pressure in the center of the array
+P{1} = ir_left(:,5);
+
+% Same for right channel
+a.showArray = false; % Don't show the microphone array again
+DOA{2} = SDMPar(ir_right, a);
+P{2} = ir_right(:,5);
+
+%% Create visualization struct with the given parameters
+plane = 'lateral'; % visualization plane
+DOI = 'backward'; % direction of integration
+plotStyle = 'fill'; % plotting style, fill or line
+name = 'Home Theater'; % title
+res = 1; % DOA resolution of the polar response
+t = [0 2 5 20]; % time indices of interest
+colors = parula(length(t)); % colormap
+dBSpacing = -12:6:0; % resolution of the dB grid
+DOASpacing = 30; % resolution of the DOA grid
+lw = zeros(size(t)); % no line
+showGrid = true; % grid in the visualization
+dBDynamics = 42; % dynamics in dB
+
+%% Create a struct for visualization with a set of parameters
+v = createVisualizationStruct('fs',fs,...
+    'Plane',plane,'DOI',DOI,'name',name,'res',res,...
+    'dBSpacing',dBSpacing,'Colors',colors,'DOASpacing',DOASpacing,...
+    'linewidth',lw,'Showgrid',showGrid,'PlotStyle',plotStyle,...
+    't',t); % Load default values
+% struct v can also be modified later for other parameters
+% e.g. v.t = [0 5 10 200]
+% For visualization purposes, set the text interpreter to latex
+set(0,'DefaultTextInterpreter','latex')
+
+%% Draw analysis parameters and impulse responses
+parameterVisualization(P, v);
+
+%% Draw time-frequency visualization
+% Drawing only the lateral plane
+timeFrequencyVisualization(P, v)
+
+%% Draw the spatiotemporal visualization
+spatioTemporalVisualization(P, DOA, v)
+
+%% Create synthesis struct with the given parameters
+% Using 5.0 loudpseaker setup with uneven distance for the loudspeakers
+lspLocs(:,1:2) = ...
+    [0 0
+    -30 0
+    +30 0
+    -110 0
+    +110 0];
+lspLocs(:,3) = [2 2.5 2 1.5 1.5]; % Distances are not equal
+
+s = createSynthesisStruct('lspLocs',lspLocs,'snfft',length(P{1}) ,...
+    'ShowArray',true,'fs',fs,'c',343,...
+    'LFEchannel',[]);
+% struct s can also be modified later for other parameters
+
+%% Synthesize the spatial impulse response with NLS
+H = cell(1,2);
+for channel = 1:2
+    H{channel} = synthesizeSDMCoeffs(P{channel},DOA{channel}, s);
+    s.showArray = false; % Don't show the loudspeaker array again
+end
+
+%% Convolution with the source signal
+% Choose 10 seconds and resample
+Sr = resample(S(1:44.e3*10,:),480,441);
+numOfLsp = size(s.lspLocs,1);
+Y = zeros(size(Sr,1),numOfLsp);
+
+% Resample H to 48e3 [Hz] sampling frequency for auralization
+H{1} = resample(H{1},1,4);
+H{2} = resample(H{2},1,4);
+
+for channel = 1:2;
+    for lsp = 1:numOfLsp
+        % Convolution with Matlab's overlap-add
+        Y(:,lsp) = Y(:,lsp) +  fftfilt(H{channel}(:,lsp),Sr(:,channel));
+    end
+end
+% Y contains the auralization of the spatial IRs with S
+
+%% Saving the auralization to a file
+% Save the file to the default folder with a custom filename.
+% Save the result as wav, as wav can handle upto 256 channels.
+disp('Started Auralization');tic
+savename = [ir_filename '_' audio_filename '.wav'];
+if max(abs(Y(:))) > 1
+    Y = Y/max(abs(Y(:)))*.9;
+    disp('Sound normalized, since otherwise would have clipped')
+end
+disp(['Ended Auralization in ' num2str(toc) ' seconds.'])
+disp('Started writing the auralization wav file')
+disp([savename  ' on the disk.']);tic
+audiowrite(savename,Y,s.fs/4)
+info = audioinfo(savename);
+disp('Wrote ... ');
+disp(info)
+disp(['... in ' num2str(toc) ' seconds'])
+%% Playback using Matlab or other applications
+
+% <REPLACE_WITH_DASH_DASH- EOF demoBinauralRendering.m
+
+##### SOURCE END #####
+--></body></html>

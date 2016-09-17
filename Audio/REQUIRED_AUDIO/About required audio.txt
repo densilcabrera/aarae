@@ -1,0 +1,9 @@
+AARAE requires wav files with the following names:
+
+REFERENCE_AUDIO.wav
+SILENCE_PLEASE.wav
+THANKYOU.wav
+
+These must be in this directory (/Audio/REQUIRED_AUDIO).
+
+You can substitute your own recordings for these if you prefer, but they must have these exact names. These should be 1-channel wav files, with a suggested sampling rate of 44.1 or 48 kHz.

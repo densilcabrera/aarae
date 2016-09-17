@@ -1,0 +1,52 @@
+% AARAE session started 16-Sep-2016 10:39:30 
+
+% Audio and Acoustical Response Environment (AARAE) for Matlab
+% AARAE Release 9
+% http://aarae.org
+
+% Reference:
+% Cabrera, D., Jimenez, D., & Martens, W. L. (2014, November).
+% Audio and Acoustical Response Analysis Environment (AARAE): 
+% a tool to support education and research in acoustics. 
+% In Proceedings of Internoise. Melbourne, Australia.
+
+% This AARAE log file contains a record of activity, including:
+%   * descriptions of audio and other data;
+%   * descriptions of activity;
+%   * results tables from analysers;
+%   * names of exported files; and
+%   * function call equivalents to AARAE activity.
+
+% When opening the log file in a spreadsheet program, use comma delimiting to distribute table data into the appropriate spreadsheet cells.
+% (However, bear in mind that the commas required in the log file's function calls will be removed when you do that.)
+
+% The code written to this log file may be useful for adapting in writing an AARAE workflow function.
+% Examples of workflows are in AARAE's Workflows folder.
+
+% **************************************************
+
+
+
+% 10:39 AM - Recorded "recording": duration = 1s
+
+%  audio field size: 48000      1
+%  fs: 48000 Hz
+%  Channel calibration offset (dB): 0
+%  ChanID:  Chan1; 
+%  properties.units: Val
+%  properties.units_ref: 1
+%  properties.units_type: 1
+
+% 11:39 AM - Saved system calibration data 
+
+% 11:39 AM - Recorded "rec_recording": duration = 2s
+
+%  audio field size: 96000      1
+%  fs: 48000 Hz
+%  audio2 field size: 48000      1
+%  Channel calibration offset (dB): 149.6578
+%  ChanID:  Chan1; 
+%  properties.units: Pa
+%  properties.units_ref: 2e-05
+%  properties.units_type: 1
+
