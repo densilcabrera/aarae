@@ -91,7 +91,7 @@ function OUT = inversefilter(in,fs,Threshold,hiF,loF,rolloffslope,zeropad,octsmo
 
 
 
-choose_from_higher_dimensions(in,1,1); % for now this function only operates on a vector
+in = choose_from_higher_dimensions(in,1,1); % for now this function only operates on a vector
 [bands,chans,dim4,dim5,dim6] = deal(1); %[~,bands,chans,dim4,dim5,dim6] = size(in.audio);
 
 
