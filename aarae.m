@@ -1791,7 +1791,7 @@ switch method
                 if (size(signaldata.audio,2) == size(cal_level,2) || size(cal_level,2) == 1) && ismatrix(caldata.audio)
                     cal_offset = inputdlg({'Calibration tone RMS level',...
                         'Underlying units',...
-                        'Reference value',...
+                        'Reference value for decibels',...
                         'Units type (1 for amplitude, 2 for power)'},...
                         'Reference audio values',...
                         [1 50],{'94','Pa','2e-5','1'});
@@ -1839,7 +1839,7 @@ switch method
             if (size(signaldata.audio,2) == size(cal_level,2) || size(cal_level,2) == 1) && ismatrix(caltone)
                    cal_offset = inputdlg({'Calibration tone RMS level',...
                         'Underlying units',...
-                        'Reference value',...
+                        'Reference value for decibels',...
                         'Units type (1 for amplitude, 2 for power)'},...
                         'Reference audio values',...
                         [1 50],{'94','Pa','2e-5','1'});
@@ -1863,47 +1863,50 @@ switch method
         else
             def = cellstr(num2str(zeros(chans,1)));
         end
-        cal_level = inputdlg(cellstr([repmat('channel ',chans,1) num2str((1:chans)')]),...
-            'Calibration value',[1 60],def);
-        cal_level = str2num(char(cal_level))'; %#ok to prevent from spaces introduced in the input boxes
-        if size(cal_level,1) > size(cal_level,2), cal_level = cal_level'; end
-        if isempty(cal_level) || chans ~= size(cal_level,2)
-            warndlg('Calibration values mismatch!','AARAE info');
-            return
+        if chans > 1
+            cal_level = inputdlg(cellstr([repmat('channel ',chans,1) num2str((1:chans)')]),...
+                'Calibration value (dB)',[1 60],def);
+            cal_level = str2num(char(cal_level))'; %#ok to prevent from spaces introduced in the input boxes
+            if size(cal_level,1) > size(cal_level,2), cal_level = cal_level'; end
+            if isempty(cal_level) || chans ~= size(cal_level,2)
+                warndlg('Calibration values mismatch!','AARAE info');
+                return
+            end
+            cal_units = inputdlg({'Underlying units',...
+                'Reference value for decibels',...
+                'Units type (1 for amplitude, 2 for power)'},...
+                'Reference audio values',...
+                [1 50],{'Pa','2e-5','1'});
+            if isnan(str2double(char(cal_units(2))))
+                return
+            else
+                units = char(cal_units(1));
+                units_ref = str2double(char(cal_units(2)));
+                units_type = str2double(char(cal_units(3)));
+            end
+        else
+            cal_offset = inputdlg({'Calibration value (dB)',...
+                'Underlying units',...
+                'Reference value for decibels',...
+                'Units type (1 for amplitude, 2 for power)'},...
+                'Reference audio values',...
+                [1 50],{'0','Pa','2e-5','1'});
+            if isnan(str2double(char(cal_offset(1))))
+                return
+            else
+                cal_level = str2double(char(cal_offset(1)));
+                units = char(cal_offset(2));
+                units_ref = str2double(char(cal_offset(3)));
+                units_type = str2double(char(cal_offset(4)));
+            end
         end
     case 4
         caldata = selectedNodes(1).handle.UserData;
         cal_level = 10 .* log10(mean(caldata.audio.^2,1));
         cal_level = repmat(20*log10(mean(10.^(cal_level./20),2)),1,size(caldata.audio,2));
-        cal_offset = inputdlg('Signal RMS level',...
-            'Calibration value',[1 50],cellstr(num2str(zeros(size(cal_level)))));
-        if isempty(cal_offset)
-            return;
-        else
-            cal_offset = str2num(char(cal_offset)); %#ok : to allow spaces between calibration values
-        end
-        if (isequal(size(cal_offset),size(cal_level)) || size(cal_offset,2) == 1) && ismatrix(caldata.audio)
-            cal_level = cal_offset - cal_level;
-        else
-            warndlg('Calibration values mismatch!','AARAE info');
-            return
-        end
-    case 5
-        caldata = selectedNodes(1).handle.UserData;
-        weights = what([cd '/Processors/Filters']);
-        if ~isempty(weights.m)
-            [selection,ok] = listdlg('ListString',cellstr(weights.m),'SelectionMode','single');
-        else
-            warndlg('No weighting filters found!','AARAE info')
-            return
-        end
-        if ok == 1
-            [~,funname] = fileparts(weights.m{selection,1});
-            caldata = feval(funname,caldata);
-            cal_level = 10 .* log10(mean(caldata.audio.^2,1));
-            cal_level = repmat(20*log10(mean(10.^(cal_level./20),2)),1,size(caldata.audio,2));
+        if size(caldata.audio,2) > 1
             cal_offset = inputdlg('Signal RMS level',...
-                'Calibration value',[1 50],cellstr(num2str(zeros(size(cal_level)))));
+                'Calibration value',[1 50],cellstr(num2str(70+zeros(size(cal_level)))));
             if isempty(cal_offset)
                 return;
             else
@@ -1915,8 +1918,89 @@ switch method
                 warndlg('Calibration values mismatch!','AARAE info');
                 return
             end
+            cal_units = inputdlg({'Underlying units',...
+                'Reference value for decibels',...
+                'Units type (1 for amplitude, 2 for power)'},...
+                'Reference audio values',...
+                [1 50],{'Pa','2e-5','1'});
+            if isnan(str2double(char(cal_units(2))))
+                return
+            else
+                units = char(cal_units(1));
+                units_ref = str2double(char(cal_units(2)));
+                units_type = str2double(char(cal_units(3)));
+            end
         else
+            cal_offset = inputdlg({'Signal RMS level (dB)',...
+                'Underlying units',...
+                'Reference value for decibels',...
+                'Units type (1 for amplitude, 2 for power)'},...
+                'Reference audio values',...
+                [1 50],{'70','Pa','2e-5','1'});
+            if isnan(str2double(char(cal_offset(1))))
+                return
+            else
+                cal_level = str2double(char(cal_offset(1))) - cal_level;
+                units = char(cal_offset(2));
+                units_ref = str2double(char(cal_offset(3)));
+                units_type = str2double(char(cal_offset(4)));
+            end
+        end
+    case 5
+        caldata = selectedNodes(1).handle.UserData;
+        weights = what([cd '/Processors/Filters']);
+        if ~isempty(weights.m)
+            [selection,ok] = listdlg('ListString',cellstr(weights.m),'SelectionMode','single');
+        else
+            warndlg('No weighting filters found!','AARAE info')
             return
+        end
+        if ok ~= 1, return; end
+        [~,funname] = fileparts(weights.m{selection,1});
+        caldata = feval(funname,caldata);
+        cal_level = 10 .* log10(mean(caldata.audio.^2,1));
+        cal_level = repmat(20*log10(mean(10.^(cal_level./20),2)),1,size(caldata.audio,2));
+        if size(caldata.audio,2) > 1
+            cal_offset = inputdlg('Signal RMS level',...
+                'Calibration value',[1 50],cellstr(num2str(70+zeros(size(cal_level)))));
+            if isempty(cal_offset)
+                return;
+            else
+                cal_offset = str2num(char(cal_offset)); %#ok : to allow spaces between calibration values
+            end
+            if (isequal(size(cal_offset),size(cal_level)) || size(cal_offset,2) == 1) && ismatrix(caldata.audio)
+                cal_level = cal_offset - cal_level;
+            else
+                warndlg('Calibration values mismatch!','AARAE info');
+                return
+            end
+            cal_units = inputdlg({'Underlying units',...
+                'Reference value for decibels',...
+                'Units type (1 for amplitude, 2 for power)'},...
+                'Reference audio values',...
+                [1 50],{'Pa','2e-5','1'});
+            if isnan(str2double(char(cal_units(2))))
+                return
+            else
+                units = char(cal_units(1));
+                units_ref = str2double(char(cal_units(2)));
+                units_type = str2double(char(cal_units(3)));
+            end
+        else
+            cal_offset = inputdlg({'Signal RMS level (dB)',...
+                'Underlying units',...
+                'Reference value for decibels',...
+                'Units type (1 for amplitude, 2 for power)'},...
+                'Reference audio values',...
+                [1 50],{'70','Pa','2e-5','1'});
+            if isnan(str2double(char(cal_offset(1))))
+                return
+            else
+                cal_level = str2double(char(cal_offset(1))) - cal_level;
+                units = char(cal_offset(2));
+                units_ref = str2double(char(cal_offset(3)));
+                units_type = str2double(char(cal_offset(4)));
+            end
         end
     case 6
         return
