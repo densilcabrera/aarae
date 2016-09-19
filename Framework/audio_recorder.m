@@ -643,10 +643,17 @@ else
         if isfield(handles.outputdata,'history')
             handles.recording.history{1,4} = handles.outputdata.history;
         end
+        inputs = cellstr(get(handles.inputdev_popup,'String'));
+        inputdevname = inputs{get(handles.inputdev_popup,'Value')};
+        outputs = cellstr(get(handles.outputdev_popup,'String'));
+        outputdevname = outputs{get(handles.outputdev_popup,'Value')};
     else
         handles.recording.history{1,1} = handles.recordtime;
         handles.recording.history{1,2} = 'Recorded without playback';
         handles.recording.history{1,3} = 'AARAE audio_recorder';
+        inputs = cellstr(get(handles.inputdev_popup,'String'));
+        inputdevname = inputs{get(handles.inputdev_popup,'Value')};
+        outputdevname = 'none';
     end
     handles.recording.history{2,1} = handles.recordtime;
     handles.recording.history{2,2} = 'Recorded';
@@ -655,7 +662,9 @@ else
         'dur', handles.dur;...
         'numchs', handles.numchs;...
         'qdur', handles.qdur;...
-        'buffer', handles.buffer};
+        'buffer', handles.buffer;...
+        'output device', outputdevname;...
+        'input device', inputdevname};
     name = matlab.lang.makeValidName(get(handles.IN_name,'String'));
     if isempty(name), name = 'untitled'; end
     setappdata(hMain,'signalname',name);
@@ -999,12 +1008,18 @@ if isfield(syscalstats,'cal')% && ~isnan(syscalstats.cal)
 end
 if isfield(syscalstats,'units')
     handles.syscalstats.units = syscalstats.units;
+else
+    handles.syscalstats.units = 'Val';
 end
 if isfield(syscalstats,'units_ref')
     handles.syscalstats.units_ref = syscalstats.units_ref;
+else
+    handles.syscalstats.units_ref = 1;
 end
 if isfield(syscalstats,'units')
     handles.syscalstats.units_type = syscalstats.units_type;
+else
+    handles.syscalstats.units_type = 1;
 end
 if isfield(syscalstats,'invfilter') && ~isempty(syscalstats.invfilter)
     if isfield(handles.syscalstats,'invfilter')

@@ -24,6 +24,9 @@ plottype = get(handles.(matlab.lang.makeValidName([axes '_popup'])),'Value');
 %else
 %    set([handles.(matlab.lang.makeValidName(['To_' axes])),handles.(matlab.lang.makeValidName(['Tf_' axes]))],'Visible','off')
 %end
+units = '';
+units_ref = 1;
+units_type = 1;
 if isfield(signaldata,'cal') && handles.Settings.calibrationtoggle == 1
     if size(linea,2) == length(signaldata.cal)
         if isfield(signaldata,'properties')

@@ -208,10 +208,13 @@ if ~isempty(filename)
         index = index + 1;
     end
 end
-for i = 1:length(h)
-    saveas(h(i),[cd '/Utilities/Temp/' handles.funname num2str(index) '.fig']);
-    fprintf(mainHandles.fid,['%% Result figure name: ', handles.funname num2str(index), '.fig, temporarily stored in /Utilities/Temp/\n']);
-    index = index + 1;
+if ~isempty(h)
+    for i = 1:length(h)
+        % There may be a timing bug here if big-data figures are closed too early
+        saveas(h(i),[cd '/Utilities/Temp/' handles.funname num2str(index) '.fig']);
+        fprintf(mainHandles.fid,['%% Result figure name: ', handles.funname num2str(index), '.fig, temporarily stored in /Utilities/Temp/\n']);
+        index = index + 1;
+    end
 end
 fprintf(mainHandles.fid,'\n');
 results = dir([cd '/Utilities/Temp']);
