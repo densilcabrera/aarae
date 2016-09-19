@@ -254,7 +254,7 @@ if ~isempty(rec)
     handles.output.audio2 = ixy;
     handles.output.fs = handles.mainHandles.fs;
     handles.output.latency = I;
-    handles.sysIR = ixy;
+    handles.sysIR = ixy(I:end); % check this - Daniel did not use the index limit
 end
 release(handles.hap)
 release(handles.har)
