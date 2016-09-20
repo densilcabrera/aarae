@@ -23,7 +23,7 @@ function varargout = audio_recorder(varargin)
 
 % Edit the above text to modify the response to help audio_recorder
 
-% Last Modified by GUIDE v2.5 25-Jul-2015 18:45:39
+% Last Modified by GUIDE v2.5 20-Sep-2016 08:33:27
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -153,6 +153,7 @@ else
         handles.silenceplease.fs = mainHandles.silenceplease.fs;
         handles.thankyou.audio = mainHandles.thankyou.audio;
         handles.thankyou.fs = mainHandles.thankyou.fs;
+        set(handles.Playback_delay,'String',num2str(getappdata(hMain,'audio_recorder_playbackdelay')));
         handles.fs = handles.outputdata.fs;
         %handles.nbits = handles.outputdata.nbits;
         handles.qdur = str2double(get(handles.IN_qdur,'String'));
@@ -378,11 +379,16 @@ if get(handles.pb_enable,'Value') == 1
         playbackaudio = handles.outputdata.audio;
         addtimeok = false;
     end
+    playbackdelay = str2num(get(handles.Playback_delay,'String'));
     %if get(handles.invfilter_chk,'Value') == 1, playbackaudio = filter(handles.syscalstats.audio2,1,playbackaudio); end
     if ~addtimeok
-        handles.hsr1.Signal = [playbackaudio;zeros(floor((handles.addtime+handles.hap.QueueDuration)*handles.fs),size(playbackaudio,2))];
+        handles.hsr1.Signal = [zeros(floor(playbackdelay*handles.fs),size(playbackaudio,2));...
+            playbackaudio;...
+            zeros(floor((handles.addtime+handles.hap.QueueDuration)*handles.fs),size(playbackaudio,2))];
     else
-        handles.hsr1.Signal = [playbackaudio;zeros(floor(handles.hap.QueueDuration*handles.fs),size(playbackaudio,2))];
+        handles.hsr1.Signal = [zeros(floor(playbackdelay*handles.fs),size(playbackaudio,2));...
+            playbackaudio;...
+            zeros(floor(handles.hap.QueueDuration*handles.fs),size(playbackaudio,2))];
     end
     handles.hsr1.SamplesPerFrame = handles.har.SamplesPerFrame;
     guidata(hObject,handles)
@@ -646,25 +652,39 @@ else
         inputs = cellstr(get(handles.inputdev_popup,'String'));
         inputdevname = inputs{get(handles.inputdev_popup,'Value')};
         outputs = cellstr(get(handles.outputdev_popup,'String'));
+        playbackdelay = str2double(get(handles.Playback_delay,'String'));
+        if get(handles.sim_chk,'Value')
+            synchplayback = 'simultaneous';
+        else
+            synchplayback = 'sequential';
+        end;
         outputdevname = outputs{get(handles.outputdev_popup,'Value')};
+        outchans = get(handles.IN_numchsout,'String');
     else
         handles.recording.history{1,1} = handles.recordtime;
         handles.recording.history{1,2} = 'Recorded without playback';
         handles.recording.history{1,3} = 'AARAE audio_recorder';
         inputs = cellstr(get(handles.inputdev_popup,'String'));
         inputdevname = inputs{get(handles.inputdev_popup,'Value')};
+        playbackdelay = '-';
+        synchplayback = '-';
         outputdevname = 'none';
+        outchans = '-';
     end
     handles.recording.history{2,1} = handles.recordtime;
     handles.recording.history{2,2} = 'Recorded';
     handles.recording.history{2,3} = 'AARAE audio_recorder';
     handles.recording.history{2,4} = {'fs', handles.fs;...
-        'dur', handles.dur;...
-        'numchs', handles.numchs;...
-        'qdur', handles.qdur;...
-        'buffer', handles.buffer;...
+        'duration', handles.dur;...
+        'input device', inputdevname;...
+        'input channels', handles.numchs;...
+        'queue duration', handles.qdur;...
+        'buffer length', handles.buffer;...
         'output device', outputdevname;...
-        'input device', inputdevname};
+        'output channels', outchans;...
+        'multi-channel output mode', synchplayback;...
+        'playback delay', playbackdelay;...
+        'silence request', get(handles.SilenceRequestCheckBox,'Value')};
     name = matlab.lang.makeValidName(get(handles.IN_name,'String'));
     if isempty(name), name = 'untitled'; end
     setappdata(hMain,'signalname',name);
@@ -1270,3 +1290,38 @@ function SilenceRequestCheckBox_CreateFcn(~, ~, ~)
 % hObject    handle to SilenceRequestCheckBox (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
+
+
+
+function Playback_delay_Callback(hObject, ~, handles)
+% hObject    handle to Playback_delay (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of Playback_delay as text
+%        str2double(get(hObject,'String')) returns contents of Playback_delay as a double
+hMain = getappdata(0,'hMain');
+playbackdelay = str2double(get(hObject,'String'));
+if (isnan(playbackdelay) || playbackdelay<=0)
+    set(hObject,'String',num2str(handles.playbackdelay))
+    warndlg('All inputs MUST be real positive numbers!');
+else
+    handles.playbackdelay = playbackdelay;
+    setappdata(hMain,'playbackdelay',playbackdelay)
+end
+guidata(hObject, handles);
+
+
+
+
+% --- Executes during object creation, after setting all properties.
+function Playback_delay_CreateFcn(hObject, ~, ~)
+% hObject    handle to Playback_delay (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

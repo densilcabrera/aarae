@@ -88,6 +88,7 @@ setappdata(hMain,'audio_recorder_fs',48000)
 setappdata(hMain,'audio_recorder_qdur',0.1) % set by testing on Matlab 2015b
 setappdata(hMain,'audio_recorder_buffer',8192) % set by testing on Matlab 2015b
 setappdata(hMain,'audio_recorder_silencerequest',0)
+setappdata(hMain,'audio_recorder_playbackdelay',0)
 setappdata(hMain,'trim_method_after_convolution',1)
 setappdata(hMain,'AARAEversion',AARAEversion)
 set(hObject,'Name','AARAE')
