@@ -6153,7 +6153,7 @@ end
 % *************************************************************************
 
 % --- Executes on button press in properties_btn.
-function properties_btn_Callback(~, ~, handles) %#ok
+function properties_btn_Callback(hObject, ~, handles) %#ok
 % hObject    handle to properties_btn (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -6164,6 +6164,8 @@ if isfield(signaldata,'properties') && handles.alternate ~= 1
     msgbox([selectedNodes(1).getName.char evalc('properties')],'AARAE info')
 elseif handles.alternate == 1
     historytable(signaldata);
+    handles.alternate = 0;
+    guidata(hObject,handles)
 end
 
 
