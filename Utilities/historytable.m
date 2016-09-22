@@ -1,5 +1,25 @@
-function historytable(audiodata)
+function data = historytable(audiodata,nofigure)
+% This function parses the history field of AARAE structures.
+% The history field is a cell array consisting of 4 columns and any number
+% of rows.
+% It is a record of events that occured such as generation, loading
+% processing, recording, etc. The generic row written at events such as
+% these has the datetime string in column 1, the general description of the
+% action in column 2 (string), the name of the function (or the name of the
+% function in the current callback) in column 3 (string), and specific data
+% in column 4. In many cases, the fourth column is a cell array, which may
+% or may not follow this generic format.
+% Some detail may not be converted in the historytable function.
 %
+% The output is done via a figure (formatted using AARAE's disptable
+% function) which has 'copy-to-clipboard' functionality. The nofigure
+% argument can be set to prevent the figure from being generated, and the
+% output argument (data) used instead. Data is a cell array of characters.
+%
+% code by Densil Cabrera (Sept 2016)
+if ~exist('nofigure','var')
+    nofigure = false;
+end
 if ~isfield(audiodata,'history')
     return
 end
@@ -59,11 +79,13 @@ for r = 1:tablesize(1)
         end
     end
 end
+if ~nofigure
 f = figure;
 t = uitable(f,'Data',data,'ColumnWidth',{200},...
     'ColumnName',{'A','B','C','D'},...
     'RowName',cellstr(num2str((1:size(data,1))')));
 disptables(f,t);
+end
 end %eof
 
 
