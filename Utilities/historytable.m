@@ -32,16 +32,16 @@ for r = 1:mainrows
     data3 = {};
     data4 = {};
     if ~isempty(data1)
-        if size(data1,1)==1 && ischar(data1{1,1}) && ischar(data1{1,2}) && ...
-                ischar(data1{1,3}) && iscell(data1{1,4})
+        if size(data1,1)==1 && ischar(data1{1,1}) && ischar(data1{1,2}) ...
+                && (iscell(data1{1,4}) || ischar((data1{1,4})))
             [data1, data2] = expandcell(data1);
             if ~isempty(data2)
-                if size(data2,1)==1 && ischar(data2{1,1}) && ischar(data2{1,2}) && ...
-                        ischar(data2{1,3}) && iscell(data2{1,4})
+                if size(data2,1)==1 && ischar(data2{1,1}) && ischar(data2{1,2}) ...
+                        && (iscell(data1{1,4}) || ischar((data1{1,4})))
                     [data2, data3] = expandcell(data2);
                     if ~isempty(data3)
-                        if size(data3,1)==1 && ischar(data3{1,1}) && ischar(data3{1,2}) && ...
-                                ischar(data3{1,3}) && iscell(data3{1,4})
+                        if size(data3,1)==1 && ischar(data3{1,1}) && ischar(data3{1,2}) ...
+                                && (iscell(data1{1,4}) || ischar((data1{1,4})))
                             [data3, data4] = expandcell(data3);
                         end
                     end
@@ -93,7 +93,15 @@ end %eof
 function [outdata, outcell] = expandcell(in)
 outdata = in;
 outcell = {};
-if iscell(in{1,4})
+if ischar(in{1,4}) && strcmp(in{1,2},'COMMENT')
+    cellsize = size(in{1,4},1);
+    outdata = [outdata;cell(cellsize-1,4)];
+    data = outdata{1,4};
+    for n = 1:cellsize
+        outdata{n,4} = char(data(n,:));
+    end
+    
+elseif iscell(in{1,4})
     cellsize = size(in{1,4});
     outdata{1,4} = ['{', num2str(cellsize(1)), 'x',...
         num2str(cellsize(2)), ' cell}'];
