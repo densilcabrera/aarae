@@ -6159,9 +6159,11 @@ function properties_btn_Callback(~, ~, handles) %#ok
 % handles    structure with handles and user data (see GUIDATA)
 selectedNodes = handles.mytree.getSelectedNodes;
 signaldata = selectedNodes(1).handle.UserData;
-if isfield(signaldata,'properties')
+if isfield(signaldata,'properties') && handles.alternate ~= 1
     properties = signaldata.properties; %#ok : used for evalc
     msgbox([selectedNodes(1).getName.char evalc('properties')],'AARAE info')
+elseif handles.alternate == 1
+    historytable(signaldata);
 end
 
 

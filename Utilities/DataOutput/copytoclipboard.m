@@ -24,11 +24,15 @@ for i = 1:length(children)
     [m n] = size(ColName);
     header(1:m,1:2:2*n) = {sprintf('\t')};
     header(1:m,2:2:2*n) = ColName;
-    Data = num2cell(Data);
+    if ~iscell(Data)
+        Data = num2cell(Data);
+    end
     [m n]  = size(Data);
     for k = 1:m
         for j = 1:n
-            Data{k,j} = num2str(Data{k,j});
+            if isnumeric(Data{k,j})
+                Data{k,j} = num2str(Data{k,j});
+            end
         end
     end
     RowandData = [RowName Data];
