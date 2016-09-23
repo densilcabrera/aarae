@@ -559,13 +559,13 @@ else
             nfigs = dir([cd '/Utilities/Temp/*.fig']);
             copyfile([cd '/Utilities/Temp'],[folder '/figures']);
         end
+        fprintf(handles.fid, ['%% ' datestr(now,16) ' - Exported ' num2str(size(leaves,1)) ' data files and ' num2str(size(nfigs,1)) ' figures to "%s" \n\n'],folder);
         if isfield(handles,'activitylog')
             if isdir([cd '/Log'])
                 copyfile([cd '/Log' handles.activitylog],folder);
             end
         end
         addpath(genpath([cd '/Projects']))
-        fprintf(handles.fid, ['%% ' datestr(now,16) ' - Exported ' num2str(size(leaves,1)) ' data files and ' num2str(size(nfigs,1)) ' figures to "%s" \n\n'],folder);
         set(hObject,'BackgroundColor',[0.94 0.94 0.94]);
         set(hObject,'Enable','off');
     else
@@ -909,7 +909,7 @@ for i = 1:length(filename)
                 if filterindex == 4, signaldata.datatype = 'results'; end;
             end
             signaldata = checkcal(signaldata);
-            signaldata = addhistory(signaldata,['Loaded using ' getappdata(hMain,'AARAEversion')]);
+            signaldata = addhistory(signaldata,['Loaded using ' getappdata(hMain,'AARAEversion')],'all');
             if isfield(signaldata,'audio') && ~strcmp(signaldata.datatype,'syscal')
                 iconPath = fullfile(matlabroot,'/toolbox/fixedpoint/fixedpointtool/resources/plot.png');
             elseif strcmp(signaldata.datatype,'syscal')
@@ -1175,10 +1175,22 @@ for nleafs = 1:length(selectedNodes)
             if isempty(ext), ext = '.mat'; end
             if strcmp(ext,'.wav') && (~isfield(audiodata,'audio') || ~isfield(audiodata,'fs')), ext = '.mat'; end
             folder_name = uigetdir(handles.defaultaudiopath,'Save AARAE file');
+            
             if ischar(folder_name)
                 handles.defaultaudiopath = folder_name;
                 listing = dir([folder_name '/' name{1,1} ext]);
                 if isempty(listing)
+                    if strcmp(ext,'.mat')
+                        newhistory = cell(1,4);
+                        newhistory{1,1} = datestr(now);
+                        newhistory{1,2} = 'Saved';
+                        newhistory{1,4} = [folder_name '/' name{1,1} ext];
+                        if isfield(audiodata,'history')
+                            audiodata.history = [audiodata.history;newhistory];
+                        else
+                            audiodata.history = newhistory;
+                        end
+                    end
                     if strcmp(ext,'.mat'), save([folder_name '/' name{1,1} ext],'audiodata','-v7.3'); end
                     if strcmp(ext,'.wav'), audiowrite([folder_name '/' name{1,1} ext],audiodata.audio,audiodata.fs); end
                 else
@@ -1189,6 +1201,17 @@ for nleafs = 1:length(selectedNodes)
                         index = index + 1;
                     end
                     name{1,1} = [name{1,1},'_',num2str(index),ext];
+                    if strcmp(ext,'.mat')
+                        newhistory = cell(1,4);
+                        newhistory{1,1} = datestr(now);
+                        newhistory{1,2} = 'Saved';
+                        newhistory{1,4} = [folder_name '/' name{1,1} ext];
+                        if isfield(audiodata,'history')
+                            audiodata.history = [audiodata.history;newhistory];
+                        else
+                            audiodata.history = newhistory;
+                        end
+                    end
                     if strcmp(ext,'.mat'), save([folder_name '/' name{1,1} ext],'audiodata','-v7.3'); end
                     if strcmp(ext,'.wav'), audiowrite(audiodata.audio,audiodata.fs,[folder_name '/' name{1,1}]); end
                 end
@@ -1543,6 +1566,21 @@ if ~isempty(IR)
     end
     IR = IR(trimsamp_low:trimsamp_high,chanind,bandind,cycind,outchanind,dim6ind);
     IRlength = length(IR);
+    trimhistory = cell(7,4);
+    trimhistory{1,3} = 'start sample';
+    trimhistory{1,4} = trimsamp_low;
+    trimhistory{2,3} = 'end sample';
+    trimhistory{2,4} = trimsamp_high;
+    trimhistory{3,3} = 'channel indices';
+    trimhistory{3,4} = chanind;
+    trimhistory{4,3} = 'band indices';
+    trimhistory{4,4} = bandind;
+    trimhistory{5,3} = 'cycle indices';
+    trimhistory{5,4} = cycind;
+    trimhistory{6,3} = 'dim 5 (output channel) indices';
+    trimhistory{6,4} = outchanind;
+    trimhistory{7,3} = 'dimension 6 indices';
+    trimhistory{7,4} = dim6ind;
     
     % Create new leaf and update the tree
     handles.mytree.setSelectedNode(handles.root);
@@ -1606,96 +1644,87 @@ if ~isempty(IR)
         signaldata.datatype = 'measurements';
         iconPath = fullfile(matlabroot,'/toolbox/fixedpoint/fixedpointtool/resources/plot.png');
         
-        % Save as you go
-        save([cd '/Utilities/Backup/' newleaf '.mat'], 'signaldata','-v7.3');
-        
-        handles.(matlab.lang.makeValidName(newleaf)) = uitreenode('v0', newleaf,  newleaf,  iconPath, true);
-        handles.(matlab.lang.makeValidName(newleaf)).UserData = signaldata;
-        handles.measurements.add(handles.(matlab.lang.makeValidName(newleaf)));
-        handles.mytree.reloadNode(handles.measurements);
-        handles.mytree.expand(handles.measurements);
-        handles.mytree.setSelectedNode(handles.(matlab.lang.makeValidName(newleaf)));
-        set([handles.clrall_btn,handles.export_btn],'Enable','on')
         fprintf(handles.fid, ['%% ' datestr(now,16) ' - Processed "' char(selectedNodes(1).getName) '" to generate an impulse response of ' num2str(IRlength) ' points\n']);
         switch calcmethod
             case 1
-                fprintf(handles.fid,'calcmethod = 1; %% Convolve audio with audio2\n');
+                str1 = 'calcmethod = 1; %% Convolve audio with audio2';
             case 2
-                fprintf(handles.fid,'calcmethod = 2; %% Cross-correlate audio with audio2\n');
+                str1 = 'calcmethod = 2; %% Cross-correlate audio with audio2';
             case 3
-                fprintf(handles.fid,'calcmethod = 3; %% Circular convolution of audio with audio2 (based on the length of audio2)\n');
+                str1 = 'calcmethod = 3; %% Circular convolution of audio with audio2 (based on the length of audio2)';
             case 4
-                fprintf(handles.fid,'calcmethod = 4; %% Circular cross-correlation of audio with audio2 (based on the length of audio2)\n');
+                str1 = 'calcmethod = 4; %% Circular cross-correlation of audio with audio2 (based on the length of audio2)';
             case 5
-                fprintf(handles.fid,'calcmethod = 5; %% Transfer function from audio2 to audio (-200 dB threshold)\n');
+                str1 = 'calcmethod = 5; %% Transfer function from audio2 to audio (-200 dB threshold)';
             case 6
-                fprintf(handles.fid,'calcmethod = 6; %% Transfer function from audio2 to audio (-90 dB threshold)\n');
+                str1 = 'calcmethod = 6; %% Transfer function from audio2 to audio (-90 dB threshold)';
             case 7
-                fprintf(handles.fid,'calcmethod = 7; %% Transfer function from audio2 to audio (-80 dB threshold)\n');
+                str1 = 'calcmethod = 7; %% Transfer function from audio2 to audio (-80 dB threshold)';
             case 8
-                fprintf(handles.fid,'calcmethod = 8; %% Transfer function from audio2 to audio (-70 dB threshold)\n');
+                str1 = 'calcmethod = 8; %% Transfer function from audio2 to audio (-70 dB threshold)';
             case 9
-                fprintf(handles.fid,'calcmethod = 9; %% Transfer function from reversed audio2 to audio (-200 dB threshold)\n');
+                str1 = 'calcmethod = 9; %% Transfer function from reversed audio2 to audio (-200 dB threshold)';
             case 10
-                fprintf(handles.fid,'calcmethod = 10; %% Transfer function from reversed audio2 to audio (-90 dB threshold)\n');
+                str1 = 'calcmethod = 10; %% Transfer function from reversed audio2 to audio (-90 dB threshold)';
             case 11
-                fprintf(handles.fid,'calcmethod = 11; %% Transfer function from reversed audio2 to audio (-80 dB threshold)\n');
+                str1 = 'calcmethod = 11; %% Transfer function from reversed audio2 to audio (-80 dB threshold)';
             case 12
-                fprintf(handles.fid,'calcmethod = 12; %% Transfer function from reversed audio2 to audio (-70 dB threshold)\n');
+                str1 = 'calcmethod = 12; %% Transfer function from reversed audio2 to audio (-70 dB threshold)';
             case 13
-                fprintf(handles.fid,'calcmethod = 13; %% Transfer function from audio to audio2 (-200 dB threshold)\n');
+                str1 = 'calcmethod = 13; %% Transfer function from audio to audio2 (-200 dB threshold)';
             case 14
-                fprintf(handles.fid,'calcmethod = 14; %% Transfer function from audio to audio2 (-90 dB threshold)\n');
+                str1 = 'calcmethod = 14; %% Transfer function from audio to audio2 (-90 dB threshold)';
             case 15
-                fprintf(handles.fid,'calcmethod = 15; %% Transfer function from audio to audio2 (-80 dB threshold)\n');
+                str1 = 'calcmethod = 15; %% Transfer function from audio to audio2 (-80 dB threshold)';
             case 16
-                fprintf(handles.fid,'calcmethod = 16; %% Transfer function from audio to audio2 (-70 dB threshold)\n');
+                str1 = 'calcmethod = 16; %% Transfer function from audio to audio2 (-70 dB threshold)';
             case 17
-                fprintf(handles.fid,'calcmethod = 17; %% Transfer function from reversed audio to audio2 (-200 dB threshold)\n');
+                str1 = 'calcmethod = 17; %% Transfer function from reversed audio to audio2 (-200 dB threshold)';
             case 18
-                fprintf(handles.fid,'calcmethod = 18; %% Transfer function from reversed audio to audio2 (-90 dB threshold)\n');
+                str1 = 'calcmethod = 18; %% Transfer function from reversed audio to audio2 (-90 dB threshold)';
             case 19
-                fprintf(handles.fid,'calcmethod = 19; %% Transfer function from reversed audio to audio2 (-80 dB threshold)\n');
+                str1 = 'calcmethod = 19; %% Transfer function from reversed audio to audio2 (-80 dB threshold)';
             case 20
-                fprintf(handles.fid,'calcmethod = 20; %% Transfer function from reversed audio to audio2 (-70 dB threshold)\n');
+                str1 = 'calcmethod = 20; %% Transfer function from reversed audio to audio2 (-70 dB threshold)';
             case 21
-                fprintf(handles.fid,'calcmethod = 21; %% Time domain deconvolution of audio2 from audio\n');
+                str1 = 'calcmethod = 21; %% Time domain deconvolution of audio2 from audio';
             case 22
-                fprintf(handles.fid,'calcmethod = 22; %% Time domain deconvolution of audio from audio2\n');
+                str1 = 'calcmethod = 22; %% Time domain deconvolution of audio from audio2';
             case 23
-                fprintf(handles.fid,'calcmethod = 23; %% Time domain deconvolution of time-reversed audio2 from audio\n');
+                str1 = 'calcmethod = 23; %% Time domain deconvolution of time-reversed audio2 from audio';
             case 24
-                fprintf(handles.fid,'calcmethod = 24; %% Time domain deconvolution of time-reversed audio from audio2\n');
+                str1 = 'calcmethod = 24; %% Time domain deconvolution of time-reversed audio from audio2';
             case 25
-                fprintf(handles.fid,'calcmethod = 25; %% Time domain convolution of audio with audio2\n');
+                str1 = 'calcmethod = 25; %% Time domain convolution of audio with audio2';
             case 26
-                fprintf(handles.fid,'calcmethod = 26; %% Time domain convolution of audio with time-reversed audio2\n');
+                str1 = 'calcmethod = 26; %% Time domain convolution of audio with time-reversed audio2';
         end
+        fprintf(handles.fid,[str1 '\n']);
         switch method
             case 1
-                fprintf(handles.fid,'method = 1; %% Synchronous average of cycles (excluding silent cycle)\n');
+                str2 = 'method = 1; %% Synchronous average of cycles (excluding silent cycle)';
             case 2
-                fprintf(handles.fid,'method = 2; %% Stack multicycle IR measurements in dimension 4\n');
+                str2 = 'method = 2; %% Stack multicycle IR measurements in dimension 4';
             case 3
-                fprintf(handles.fid,'method = 3; %% Reshape higher dimensions (>3) to channels\n');
+                str2 = 'method = 3; %% Reshape higher dimensions (>3) to channels';
             case 4
-                fprintf(handles.fid,'method = 4; %% Simply convolve (without averaging, stacking or selecting)\n');
+                str2 = 'method = 4; %% Simply convolve (without averaging, stacking or selecting)';
             case 5
-                fprintf(handles.fid,'method = 5; %% Select the cleanest cycle\n');
+                str2 = 'method = 5; %% Select the cleanest cycle';
             case 6
-                fprintf(handles.fid,'method = 6; %% Select the cleanest IR (multichannel)\n');
+                str2 = 'method = 6; %% Select the cleanest IR (multichannel)';
             case 7
-                fprintf(handles.fid,'method = 7; %% Select the cleanest single IR (best channel)\n');
+                str2 = 'method = 7; %% Select the cleanest single IR (best channel)';
             case 8
-                fprintf(handles.fid,'method = 8; %% Select the silent cycle or the IR with the lowest SNR (multichannel)\n');
+                str2 = 'method = 8; %% Select the silent cycle or the IR with the lowest SNR (multichannel)';
             case 9
-                fprintf(handles.fid,'method = 9; %% Exclude the IR with the lowest SNR (multichannel)\n');
+                str2 = 'method = 9; %% Exclude the IR with the lowest SNR (multichannel)';
             case 10
-                fprintf(handles.fid,'method = 10; %% Stack of IRs cumulatively averaged from best to worst SNR, with silent cycle (if available)\n');
+                str2 = 'method = 10; %% Stack of IRs cumulatively averaged from best to worst SNR, with silent cycle (if available)';
             case 11
-                fprintf(handles.fid,'method = 11; %% Stack of IRs cumulatively averaged from best to worst SNR, with silent cycle (if available), and visualisation the stack\n');
+                str2 = 'method = 11; %% Stack of IRs cumulatively averaged from best to worst SNR, with silent cycle (if available), and visualisation the stack';
         end
-        
+        fprintf(handles.fid,[str2 '\n']);
         fprintf(handles.fid,['X = convolveaudiowithaudio2(X,','method',',',num2str(scalingmethod),',calcmethod);\n']);
         
         fprintf(handles.fid,['X.audio = X.audio(',num2str(trimsamp_low),':',num2str(trimsamp_high),...
@@ -1709,6 +1738,43 @@ if ~isempty(IR)
         fprintf(handles.fid,'\n');
         % Log verbose metadata (not necessary here)
         % logaudioleaffields(signaldata);
+        newhistory = cell(3,4);
+        newhistory{1,1} = datestr(now);
+        newhistory{1,2} = 'Processed using the ''*'' button';
+        newhistory{1,3} = 'Secondary audio source:';
+        if ~exist('selection','var')
+            newhistory{1,4} = 'audio2';
+            selectionhistory = {};
+        else
+            newhistory{1,4} = 'user-selected';
+            selectionhistory = cell(1,4);
+            selectionhistory{1,1} = '';
+            selectionhistory{1,2} = 'USER-SELECTED SECONDARY AUDIO DETAILS:';
+            if isfield(selection,'name')
+                selectionhistory{1,3} = selection.name;
+            end
+            if isfield(selection,'history')
+                selectionhistory{1,4} = selection.history;
+            end
+        end
+        newhistory{2,4} = str1;
+        newhistory{3,4} = str2;
+        if isfield(signaldata,'history')
+            signaldata.history = [signaldata.history; newhistory;...
+                trimhistory;selectionhistory];
+        else
+            signaldata.history = [newhistory; trimhistory;selectionhistory];
+        end
+        % Save as you go
+        save([cd '/Utilities/Backup/' newleaf '.mat'], 'signaldata','-v7.3');
+        
+        handles.(matlab.lang.makeValidName(newleaf)) = uitreenode('v0', newleaf,  newleaf,  iconPath, true);
+        handles.(matlab.lang.makeValidName(newleaf)).UserData = signaldata;
+        handles.measurements.add(handles.(matlab.lang.makeValidName(newleaf)));
+        handles.mytree.reloadNode(handles.measurements);
+        handles.mytree.expand(handles.measurements);
+        handles.mytree.setSelectedNode(handles.(matlab.lang.makeValidName(newleaf)));
+        set([handles.clrall_btn,handles.export_btn],'Enable','on')
     end
 end
 handles.alternate = 0;

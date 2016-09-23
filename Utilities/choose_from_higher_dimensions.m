@@ -376,6 +376,16 @@ if isstruct(IN)
     if exist('relgain','var')
         OUT.properties.relgain = relgain;
     end
+    if exist('indexstring','var')
+        historyrow = cell(1,4);
+        historyrow{1,3} = 'Selection';
+        historyrow{1,4} = indexstring;
+        if isfield(OUT,'history')
+            OUT.history = [OUT.history;historyrow];
+        else
+            OUT.history = historyrow;
+        end
+    end
 else
     OUT = audio;
 end

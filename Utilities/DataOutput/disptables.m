@@ -62,7 +62,7 @@ switch window
         x = s{1,1}(1,3);
         for i = 2:ntables
             set(tables(i),'Position',[s{i,1}(1,1) y+10 s{i,1}(1,3) s{i,1}(1,4)])
-            y = y + s{i,1}(1,4) + 10;
+            y = y + s{i,1}(1,4) + 100;
             if s{i,1}(1,3) > x, x = s{i,1}(1,3); end
         end
         set(fig,'Position',[figpos(1) figpos(2) x y],...

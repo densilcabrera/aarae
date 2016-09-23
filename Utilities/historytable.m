@@ -13,13 +13,12 @@ function data = historytable(audiodata,nofigure)
 %
 % The output is done via a figure (formatted using AARAE's disptable
 % function) which has 'copy-to-clipboard' functionality. The nofigure
-% argument can be set to prevent the figure from being generated, and the
-% output argument (data) used instead. Data is a cell array of characters.
+% argument can be included (with any content whatsoever) to prevent the
+% figure from being generated, and the output argument (data) used instead.
+% Data is a cell array of characters.
 %
 % code by Densil Cabrera (Sept 2016)
-if ~exist('nofigure','var')
-    nofigure = false;
-end
+
 if ~isfield(audiodata,'history')
     return
 end
@@ -37,11 +36,11 @@ for r = 1:mainrows
             [data1, data2] = expandcell(data1);
             if ~isempty(data2)
                 if size(data2,1)==1 && ischar(data2{1,1}) && ischar(data2{1,2}) ...
-                        && (iscell(data1{1,4}) || ischar((data1{1,4})))
+                        && (iscell(data2{1,4}) || ischar((data2{1,4})))
                     [data2, data3] = expandcell(data2);
                     if ~isempty(data3)
                         if size(data3,1)==1 && ischar(data3{1,1}) && ischar(data3{1,2}) ...
-                                && (iscell(data1{1,4}) || ischar((data1{1,4})))
+                                && (iscell(data3{1,4}) || ischar((data3{1,4})))
                             [data3, data4] = expandcell(data3);
                         end
                     end
@@ -71,16 +70,16 @@ for r = 1:tablesize(1)
             end
         elseif isnumeric(data{r,c})
             data{r,c} = num2str(data{r,c});
+        elseif ~ischar(data{r,c})
+            data{r,c} = '?';
         elseif size(data{r,c},1) > 1
             data{r,c} = ['[', num2str(size(data{r,c},1)), 'x',...
             num2str(size(data{r,c},2)), ' char]'];
-        elseif ~ischar(data{r,c})
-            data{r,c} = '?';
         end
     end
 end
-if ~nofigure
-f = figure;
+if ~exist('nofigure','var')
+f = figure('Name','AARAE history table');
 t = uitable(f,'Data',data,'ColumnWidth',{200},...
     'ColumnName',{'A','B','C','D'},...
     'RowName',cellstr(num2str((1:size(data,1))')));
