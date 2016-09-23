@@ -41,14 +41,18 @@ if nargin == 1, str = ''; end
     if isfield(signaldata, 'chanID') && (checkinput(options,'chanID') || checkinput(options,'all'))
         newrow = cell(1,4);
         newrow{1,3} = 'chanID';
-        newrow{1,4} = signaldata.chanID;
+        chansstr = '';
+        for c = 1:size(signaldata.chanID,1)
+            chansstr = [chansstr char(signaldata.chanID{c,1}) '; '];
+        end
+        newrow{1,4} = chansstr;
         row = [row;newrow];
     end
     
     if isfield(signaldata, 'bandID') && (checkinput(options,'bandID') || checkinput(options,'all'))
         newrow = cell(1,4);
         newrow{1,3} = 'bandID';
-        newrow{1,4} = signaldata.bandID;
+        newrow{1,4} = num2str(signaldata.bandID(:)');
         row = [row;newrow];
     end
     
@@ -87,7 +91,7 @@ if nargin == 1, str = ''; end
 end
 
 function out = checkinput(varcell,str)
-% maybe this is more straightforward that inputParser
+% maybe this is more straightforward than inputParser
 out = false;
     for n = 1:length(varcell)
         if strcmp(varcell{n},str)

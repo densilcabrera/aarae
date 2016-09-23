@@ -92,14 +92,13 @@ end %eof
 function [outdata, outcell] = expandcell(in)
 outdata = in;
 outcell = {};
-if ischar(in{1,4}) && strcmp(in{1,2},'COMMENT')
+if ischar(in{1,4}) && strcmp(in{1,2},'COMMENT') % special case: comment
     cellsize = size(in{1,4},1);
     outdata = [outdata;cell(cellsize-1,4)];
     data = outdata{1,4};
     for n = 1:cellsize
         outdata{n,4} = char(data(n,:));
     end
-    
 elseif iscell(in{1,4})
     cellsize = size(in{1,4});
     outdata{1,4} = ['{', num2str(cellsize(1)), 'x',...

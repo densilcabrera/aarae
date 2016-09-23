@@ -116,5 +116,5 @@ elseif ~isempty(regexp(char(chanID{1}),'m','once'))
     
 else
     out = [];
-        
+    format = [];  
 end
