@@ -50,6 +50,9 @@ function mySelectFcn(tree, ~)
                 audiodatatext = [audiodatatext, char(10), ' audio2 [',num2str(size(audiodata.audio2,1)),'x',...
                 num2str(size(audiodata.audio2,2)),']'];
             end
+            if isfield(audiodata, 'fs')
+                audiodatatext = [audiodatatext, char(10), ' fs ',num2str(audiodata.fs), ' Hz'];
+            end
             if isfield(audiodata,'chanID')
                 if length(audiodata.chanID) == 1
                     audiodatatext = [audiodatatext, char(10), ' chanID {', audiodata.chanID{1,1}, '}'];
