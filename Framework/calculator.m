@@ -23,7 +23,7 @@ function varargout = calculator(varargin)
 
 % Edit the above text to modify the response to help calculator
 
-% Last Modified by GUIDE v2.5 01-Nov-2013 14:38:55
+% Last Modified by GUIDE v2.5 28-Sep-2016 07:51:40
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -169,7 +169,7 @@ if nargout(handles.funname) == 1
                 end
                 signaldata.name = matlab.lang.makeValidName([signaldata.name,'_',num2str(index)]);
             end
-            
+            signaldata = addhistory(signaldata,'Calculated from','all');
             % Save as you go
             save([cd '/Utilities/Backup/' signaldata.name '.mat'], 'signaldata');
             
