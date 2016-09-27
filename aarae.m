@@ -909,7 +909,7 @@ for i = 1:length(filename)
                 if filterindex == 4, signaldata.datatype = 'results'; end;
             end
             signaldata = checkcal(signaldata);
-            signaldata = addhistory(signaldata,['Loaded using ' getappdata(hMain,'AARAEversion')],'all');
+            signaldata = addhistory(signaldata,['Loaded by ' handles.Settings.username ' using ' getappdata(hMain,'AARAEversion')],'all');
             if isfield(signaldata,'audio') && ~strcmp(signaldata.datatype,'syscal')
                 iconPath = fullfile(matlabroot,'/toolbox/fixedpoint/fixedpointtool/resources/plot.png');
             elseif strcmp(signaldata.datatype,'syscal')
@@ -1872,6 +1872,15 @@ switch method
                         units_type = str2double(char(cal_offset(4)));
                     end
                     if size(cal_level,2) == 1, cal_level = repmat(cal_level,1,size(signaldata.audio,2)); end
+                    calhistory = cell(1,4);
+                    calhistory{1,2} = 'Reference audio chosen from AARAE';
+                    if isfield(caldata,'name')
+                        calhistory{1,3} = caldata.name;
+                    end
+                    if isfield(caldata,'history')
+                        calhistory{1,4} = 'reference audio history below';
+                        calhistory = [calhistory,caldata.history]
+                    end
                 else
                     warndlg('Incompatible calibration file','Warning!');
                 end
@@ -1898,7 +1907,7 @@ switch method
                     caltone = file;
                 end
             elseif strcmp(ext,'.wav') || strcmp(ext,'.WAV')
-                caltone = audioread(fullfile(handles.defaultaudiopath,filename));
+                [caltone, caltonefs] = audioread(fullfile(handles.defaultaudiopath,filename));
             else
                 caltone = [];
             end
@@ -1920,6 +1929,20 @@ switch method
                     units_type = str2double(char(cal_offset(4)));
                 end
                 if size(cal_level,2) == 1, cal_level = repmat(cal_level,1,size(signaldata.audio,2)); end
+                calhistory = cell(1,4);
+                    calhistory{1,2} = 'Reference audio chosen from file';
+                    if strcmp(ext,'.mat') || strcmp(ext,'.MAT')
+                        if isfield(file,'name')
+                            calhistory{1,3} = file.name;
+                        end
+                        if isfield(file,'history')
+                            calhistory{1,4} = 'reference file history below';
+                            calhistory = [calhistory; file.history];
+                        end
+                    elseif strcmp(ext,'.wav') || strcmp(ext,'.WAV')
+                        calhistory{1,3} = filename;
+                        calhistory{1,4} = ['size = ' num2str(size(caltone,1)) 'x' num2str(size(caltone,2)) ', fs = ' num2str(caltonefs)];
+                    end
             else
                 warndlg('Incompatible calibration file!','AARAE info');
             end
@@ -1968,6 +1991,8 @@ switch method
                 units_type = str2double(char(cal_offset(4)));
             end
         end
+        calhistory = cell(1,4);
+        calhistory{1,2} = 'Direct input of cal field values';
     case 4
         caldata = selectedNodes(1).handle.UserData;
         cal_level = 10 .* log10(mean(caldata.audio.^2,1));
@@ -2014,6 +2039,9 @@ switch method
                 units_type = str2double(char(cal_offset(4)));
             end
         end
+        calhistory = cell(1,4);
+        calhistory{1,2} = 'Direct input of signal rms levels';
+        calhistory{1,4} = char(cal_offset(1));
     case 5
         caldata = selectedNodes(1).handle.UserData;
         weights = what([cd '/Processors/Filters']);
@@ -2070,6 +2098,10 @@ switch method
                 units_type = str2double(char(cal_offset(4)));
             end
         end
+        calhistory = cell(1,4);
+        calhistory{1,2} = 'Direct input of signal spectrally weighted rms levels';
+        calhistory{1,3} = funname;
+        calhistory{1,4} = char(cal_offset(1));
     case 6
         return
 end
@@ -2091,6 +2123,14 @@ if ~isempty(cal_level)
         end
         signaldata = checkcal(signaldata);
         signaldata = addhistory(signaldata,'Calibrated','cal');
+        unitsrow = cell(3,4);
+        unitsrow{1,3} = 'units';
+        unitsrow{1,4} = signaldata.properties.units;
+        unitsrow{2,3} = 'reference value for dB';
+        unitsrow{2,4} = signaldata.properties.units_ref;
+        unitsrow{3,3} = 'units type';
+        unitsrow{3,4} = signaldata.properties.units_type;
+        signaldata.history = [signaldata.history; unitsrow; calhistory];
         % Save as you go
         delete([cd '/Utilities/Backup/' selectedNodes(i).getName.char '.mat'])
         save([cd '/Utilities/Backup/' selectedNodes(i).getName.char '.mat'], 'signaldata','-v7.3');
