@@ -4131,7 +4131,6 @@ for nleafs = 1:length(selectedNodes)
                 if isfield(newdata,'tables') && isfield(newdata,'audio2')
                     newdata = rmfield(newdata,'audio2');
                 end
-                
             else
                 % should not be necessary
                 newdata = signaldata;
@@ -4152,12 +4151,12 @@ for nleafs = 1:length(selectedNodes)
             end
             newleaf{1,1} = matlab.lang.makeValidName([newleaf{1,1},'_',num2str(index)]);
         end
-        
         newdata_fields = fieldnames(newdata);
         newdata_emptyfields = structfun(@isempty,newdata);
         newdata = rmfield(newdata,newdata_fields(newdata_emptyfields));
         newdata.name = matlab.lang.makeValidName(newleaf{1,1});
         newdata = checkcal(newdata);
+        newdata = addhistory(newdata,'Ran workflow','all');
         % Save as you go
         save([cd '/Utilities/Backup/' newleaf{1,1} '.mat'], 'newdata','-v7.3');
         
