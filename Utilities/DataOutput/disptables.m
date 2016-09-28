@@ -28,6 +28,7 @@ function varargout = disptables(fig,tables,names)
 %   See also copytoclipboard
 %
 %   Code by Daniel R. Jimenez for the AARAE project. (28 March 2014)
+%   Edited by Densil Cabrera Sept 2016
 
 if length(fig) ~= length(tables), window = 'single'; end
 if length(fig) == length(tables), window = 'multi'; end
@@ -47,7 +48,7 @@ switch window
         for i = 1:ntables
             set(tables(i),'Parent',fig(i))
             s = get(tables(i),'Extent');
-            set(fig(i),'Position',[figpos{i,1}(1) figpos{i,1}(2) s(3) s(4)],'WindowButtonDownFcn','copytoclipboard')
+            set(fig(i),'Position',[figpos{i,1}(1) figpos{i,1}(2) s(3) s(4)+20],'WindowButtonDownFcn','copytoclipboard')
             set(tables(i),'Position',s)
         end
     case 'single'
@@ -65,10 +66,18 @@ switch window
             y = y + s{i,1}(1,4) + 100;
             if s{i,1}(1,3) > x, x = s{i,1}(1,3); end
         end
-        set(fig,'Position',[figpos(1) figpos(2) x y],...
+        set(fig,'Position',[figpos(1) figpos(2) x y+20],...
             'WindowButtonDownFcn','copytoclipboard',...
             'Tag','AARAE table')
 end
+
+% % Get the Java scroll-pane container reference
+jScrollPane = findjobj(tables);
+%  http://undocumentedmatlab.com/blog/customizing-listbox-editbox-scrollbars
+jScrollPane.setVerticalScrollBarPolicy(22); % or: jScrollPane.VERTICAL_SCROLLBAR_ALWAYS
+jScrollPane.setHorizontalScrollBarPolicy(30);  % or: jScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
+        
+
 for n = 1:length(tables)
     outtables(n).RowName = get(tables(n),'RowName');
     outtables(n).ColumnName = get(tables(n),'ColumnName');
