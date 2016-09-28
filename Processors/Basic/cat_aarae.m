@@ -236,10 +236,29 @@ function out = cat_aarae(in,catdim)
     end
             
             
-            
-            
-            
-        
+    
+    % concatenate history
+    
+    histrow = cell(1,4);
+    histrow{1,1} = datestr(now);
+    histrow{1,2} = 'Concatenated';
+    if isfield(in,'name')
+        histrow{1,3} = in.name;
+    end
+    if isfield(selection,'name')
+        histrow{1,4} = selection.name;
+    end
+    if isfield(in,'history') && isfield(selection,'history')
+        out.history = [histrow; in.history; selection.history; cell(1,4)];
+    elseif isfield(in,'history') && ~isfield(selection,'history')
+        out.history = [histrow; in.history; cell(1,4)];
+    elseif ~isfield(in,'history') && isfield(selection,'history')
+        out.history = [histrow; selection.history; cell(1,4)];
+    else
+        out.history = histrow;
+    end
+    
+    
     
     
     
