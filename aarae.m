@@ -208,8 +208,30 @@ else
 end
 
 handles.alternate = 0;
+
+[status, login] = system('who');
+if status == 0
+    handles.login = login;
+else
+    handles.login = '';
+end
+try
+    address = char(java.net.InetAddress.getLocalHost);
+catch
+    address = '';
+end
+handles.IPdata = checkIPdata;
 fprintf(handles.fid, ['%% AARAE session started ' datestr(now) '\n']);
-fprintf(handles.fid, ['%% User: ' handles.Settings.username '\n\n']);
+fprintf(handles.fid, ['%% User: ' handles.Settings.username '\n']);
+if ~isempty(login), fprintf(handles.fid, ['%% System user: ' login '\n']); end
+if ~isempty(address), fprintf(handles.fid, ['%% Address: ' address '\n']); end
+if ~isempty(handles.IPdata)
+    fprintf(handles.fid, ['%% City: ' handles.IPdata.city ...
+        ', Country: ' handles.IPdata.country ...
+        ', Lat: ' handles.IPdata.lat ', Lon: ' ...
+        handles.IPdata.lon ', Time zone: ' handles.IPdata.timezone '\n']);
+end
+fprintf(handles.fid, '%% \n');
 fprintf(handles.fid, '%% Audio and Acoustical Response Environment (AARAE) for Matlab\n');
 fprintf(handles.fid, ['%% ' AARAEversion  '\n']);
 fprintf(handles.fid, '%% http://aarae.org\n\n');
