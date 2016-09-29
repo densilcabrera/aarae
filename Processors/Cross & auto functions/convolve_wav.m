@@ -102,6 +102,27 @@ if ~isempty(wave1) && ~isempty(fs) && ~isempty(wave2) && ~isempty(fs2)
     if size(y,2) ~= size(wave1,2)
         OUT.chanID = makechanID(size(y,2),0);
     end
+    historyrow = cell(1,4);
+    historyrow{1,1} = datestr(now);
+    historyrow{1,3} = 'convolved with';
+    if isfield(selection, 'name')
+        historyrow{1,4} = selection.name;
+    else
+        historyrow{1,4} = 'unnamed audio';
+    end
+    if isfield(selection,'history')
+        if isfield(OUT,'history')
+            OUT.history = [OUT.history; historyrow; selection.history];
+        else
+            OUT.history = [historyrow; selection.history];
+        end
+    else
+        if isfield(OUT,'history')
+            OUT.history = [OUT.history; historyrow];
+        else
+            OUT.history = historyrow;
+        end
+    end
     OUT.audio = y;
     OUT.funcallback.name = 'convolve_wav.m';
     OUT.funcallback.inarg = {fs,wave2,fs2,more_options};

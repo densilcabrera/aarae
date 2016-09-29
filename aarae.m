@@ -4588,7 +4588,7 @@ for nleafs = 1:length(selectedNodes)
                     newdata = rmfield(newdata,newdata_fields(newdata_emptyfields));
                     newdata.name = matlab.lang.makeValidName(newleaf{1,1});
                     newdata = checkcal(newdata);
-                    newdata = addhistory(newdata,'Processed','audio');
+                    newdata = addhistory(newdata,'Processed','audio','callback');
                     % Save as you go
                     save([cd '/Utilities/Backup/' newleaf{1,1} '.mat'], 'newdata','-v7.3');
                     
