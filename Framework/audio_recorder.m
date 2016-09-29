@@ -23,7 +23,7 @@ function varargout = audio_recorder(varargin)
 
 % Edit the above text to modify the response to help audio_recorder
 
-% Last Modified by GUIDE v2.5 20-Sep-2016 08:33:27
+% Last Modified by GUIDE v2.5 29-Sep-2016 15:39:00
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -685,6 +685,9 @@ else
         'multi-channel output mode', synchplayback;...
         'playback delay', playbackdelay;...
         'silence request', get(handles.SilenceRequestCheckBox,'Value')};
+    if isfield(handles,'comment')
+        handles.recording.history = [handles.recording.history; handles.comment];
+    end
     name = matlab.lang.makeValidName(get(handles.IN_name,'String'));
     if isempty(name), name = 'untitled'; end
     setappdata(hMain,'signalname',name);
@@ -1325,3 +1328,35 @@ function Playback_delay_CreateFcn(hObject, ~, ~)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in LogTextfromRecorder.
+function LogTextfromRecorder_Callback(hObject, ~, handles)
+% hObject    handle to LogTextfromRecorder (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+answer = inputdlg('Add comment to the log file and the selection''s history field(s):','Log comment',[15 150]);
+% write to log file
+if ~isempty(answer)
+    answer = char(answer);
+    logtext('%% **************************************************\n');
+    logtext(['%% User comment ' datestr(now,16) ' \n']);
+    logtext('%% \n');
+    for n = 1:size(answer,1)
+        logtext(['%% ' answer(n,:) '\n']);
+    end
+    logtext('%% \n');
+    logtext('%% **************************************************\n');
+end
+
+row = cell(1,4);
+row{1,1} = datestr(now);
+row{1,2} = 'COMMENT';
+row{1,4} = answer;
+if isfield(handles,'comment')
+    handles.comment = [handles.comment;row];
+else
+    handles.comment = row;
+end
+
+guidata(hObject,handles)
