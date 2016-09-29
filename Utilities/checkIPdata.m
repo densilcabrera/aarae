@@ -24,5 +24,5 @@ try
     % IPdata.query = x{17};
     
 catch
-    IPdata = [];
+    IPdata = 'IP data unavailable';
 end

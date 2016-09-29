@@ -170,6 +170,12 @@ if nargout(handles.funname) == 1
                 signaldata.name = matlab.lang.makeValidName([signaldata.name,'_',num2str(index)]);
             end
             signaldata = addhistory(signaldata,'Calculated from','all');
+            if isstruct(mainHandles.IPdata)
+                historycell = cell(12,4);
+                historycell(:,3) = fieldnames(mainHandles.IPdata);
+                historycell(:,4) = struct2cell(mainHandles.IPdata);
+                signaldata.history = [signaldata.history; historycell];
+            end
             % Save as you go
             save([cd '/Utilities/Backup/' signaldata.name '.mat'], 'signaldata');
             
