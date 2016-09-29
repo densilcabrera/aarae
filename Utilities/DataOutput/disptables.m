@@ -30,27 +30,30 @@ function varargout = disptables(fig,tables,names)
 %   Code by Daniel R. Jimenez for the AARAE project. (28 March 2014)
 %   Edited by Densil Cabrera Sept 2016
 
-if length(fig) ~= length(tables), window = 'single'; end
-if length(fig) == length(tables), window = 'multi'; end
+ss = get(0,'screensize');
+if length(fig) ~= length(tables), windowtype = 'single'; end
+if length(fig) == length(tables), windowtype = 'multi'; end
 figpos = get(fig,'Position');
 ntables = length(tables);
 if nargin < 3
     names = cellstr([repmat('Table',length(tables),1) num2str((1:length(tables))')]);
 end
 if ntables == 1
-    window = 'multi';
+    windowtype = 'multi';
     temp = figpos;
     clear figpos
     figpos{1,1} = temp;
 end
-switch window
+switch windowtype
     case 'multi'
         for i = 1:ntables
             set(tables(i),'Parent',fig(i))
             s = get(tables(i),'Extent');
-            set(fig(i),'Position',[figpos{i,1}(1) figpos{i,1}(2) s(3) s(4)+20],'WindowButtonDownFcn','copytoclipboard')
+            set(fig(i),'Position',[figpos{i,1}(1) figpos{i,1}(2) min([s(3) ss(3)]) min([s(4)+20 ss(4)])],'WindowButtonDownFcn','copytoclipboard')
             set(tables(i),'Position',s)
         end
+        x = min([s(3) ss(3)]);
+        y = min([s(4)+20 ss(4)]);
     case 'single'
         set(tables,'Parent',fig)
         s = get(tables,'Extent');
@@ -66,17 +69,25 @@ switch window
             y = y + s{i,1}(1,4) + 100;
             if s{i,1}(1,3) > x, x = s{i,1}(1,3); end
         end
-        set(fig,'Position',[figpos(1) figpos(2) x y+20],...
+%         set(fig,'Position',[figpos(1) figpos(2) x y+20],...
+%             'WindowButtonDownFcn','copytoclipboard',...
+%             'Tag','AARAE table')
+        
+        set(fig,'OuterPosition',[1 1 min([x ss(3)]) min([y+20 ss(4)])],...
             'WindowButtonDownFcn','copytoclipboard',...
             'Tag','AARAE table')
 end
 
+
 % % Get the Java scroll-pane container reference
 jScrollPane = findjobj(tables);
 %  http://undocumentedmatlab.com/blog/customizing-listbox-editbox-scrollbars
-jScrollPane.setVerticalScrollBarPolicy(22); % or: jScrollPane.VERTICAL_SCROLLBAR_ALWAYS
-jScrollPane.setHorizontalScrollBarPolicy(30);  % or: jScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
-        
+if y+20 > 0.9*ss(4)
+    jScrollPane.setVerticalScrollBarPolicy(22); % or: jScrollPane.VERTICAL_SCROLLBAR_ALWAYS
+end
+if x>0.9*ss(3)
+    jScrollPane.setHorizontalScrollBarPolicy(30);  % or: jScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
+end
 
 for n = 1:length(tables)
     outtables(n).RowName = get(tables(n),'RowName');

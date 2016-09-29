@@ -105,6 +105,9 @@ else
     Settings.colormap = 'Jet';
     Settings.specmagscale = 'Raw';
     Settings.username = 'AARAE User';
+    Settings.recordaddress = 1;
+    Settings.recordIPdata = 1;
+    Settings.recordlogin = 1;
     handles.Settings = Settings;
     save([cd '/Settings.mat'],'Settings')
 end
@@ -209,22 +212,38 @@ end
 
 handles.alternate = 0;
 
-[status, login] = system('who');
-if status == 0
-    handles.login = login;
+
+if Settings.recordlogin == 1
+    [status, login] = system('who');
+    if status == 0
+        handles.login = login;
+    else
+        handles.login = '';
+    end
 else
     handles.login = '';
 end
-try
-    address = char(java.net.InetAddress.getLocalHost);
-catch
-    address = '';
+
+if Settings.recordaddress == 1
+    try
+        handles.address = char(java.net.InetAddress.getLocalHost);
+    catch
+        handles.address = '';
+    end
+else
+    handles.address = '';
 end
-handles.IPdata = checkIPdata;
+
+if Settings.recordIPdata == 1
+    handles.IPdata = checkIPdata;
+else
+    handles.IPdata = [];
+end
+
 fprintf(handles.fid, ['%% AARAE session started ' datestr(now) '\n']);
 fprintf(handles.fid, ['%% User: ' handles.Settings.username '\n']);
-if ~isempty(login), fprintf(handles.fid, ['%% System user: ' login '\n']); end
-if ~isempty(address), fprintf(handles.fid, ['%% Address: ' address '\n']); end
+if ~isempty(handles.login), fprintf(handles.fid, ['%% System user: ' handles.login '\n']); end
+if ~isempty(handles.address), fprintf(handles.fid, ['%% Address: ' handles.address '\n']); end
 if isstruct(handles.IPdata)
     fprintf(handles.fid, ['%% City: ' handles.IPdata.city ...
         ', Country: ' handles.IPdata.country ...
@@ -827,6 +846,18 @@ if ~isempty(getappdata(hMain,'testsignal'))
         historycell(:,4) = struct2cell(handles.IPdata);
         signaldata.history = [signaldata.history; historycell]; 
     end
+    if ~isempty(handles.login)
+        historycell = cell(1,4);
+        historycell{1,3} = 'System login';
+        historycell{1,4} = handles.login;
+        signaldata.history = [signaldata.history; historycell]; 
+    end
+%     if ~isempty(handles.address)
+%         historycell = cell(1,4);
+%         historycell{1,3} = 'Address';
+%         historycell{1,4} = handles.address;
+%         signaldata.history = [signaldata.history; historycell]; 
+%     end
     leafname = isfield(handles,matlab.lang.makeValidName(newleaf));
     if leafname == 1
         index = 1;

@@ -22,7 +22,7 @@ function varargout = settings(varargin)
 
 % Edit the above text to modify the response to help settings
 
-% Last Modified by GUIDE v2.5 17-Sep-2016 14:03:05
+% Last Modified by GUIDE v2.5 29-Sep-2016 18:18:56
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -103,6 +103,9 @@ else
     else
         set(handles.specmagscale_popup,'Value',1)
     end
+    set(handles.addresscheckbox,'Value',mainHandles.Settings.recordaddress)
+    set(handles.logonsheckbox,'Value',mainHandles.Settings.recordlogin)
+    set(handles.IPdatacheckbox,'Value',mainHandles.Settings.recordIPdata)
     set(handles.UserNameTextBox,'String',mainHandles.Settings.username)
     handles.output = mainHandles.Settings;
     guidata(hObject, handles);
@@ -362,3 +365,34 @@ function UserNameTextBox_CreateFcn(hObject, ~, ~)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in IPdatacheckbox.
+function IPdatacheckbox_Callback(hObject, ~, handles)
+% hObject    handle to IPdatacheckbox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of IPdatacheckbox
+handles.output.recordIPdata = get(hObject,'Value');
+guidata(hObject,handles)
+
+% --- Executes on button press in logonsheckbox.
+function logonsheckbox_Callback(hObject, ~, handles)
+% hObject    handle to logonsheckbox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of logonsheckbox
+handles.output.recordlogin = get(hObject,'Value');
+guidata(hObject,handles)
+
+% --- Executes on button press in addresscheckbox.
+function addresscheckbox_Callback(hObject, ~, handles)
+% hObject    handle to addresscheckbox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of addresscheckbox
+handles.output.recordaddress = get(hObject,'Value');
+guidata(hObject,handles)
