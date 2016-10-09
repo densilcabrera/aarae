@@ -97,6 +97,20 @@ Settings = [];
 if ~isempty(dir([cd '/Settings.mat']))
     load([cd '/Settings.mat']);
     handles.Settings = Settings;
+    % The following is to avoid problems when the format of Settings.mat is
+    % changed (future releases). It should be extended as new settings are
+    % added. Previously the old settings file needed to be deleted for
+    % aarae to run with a changed settings format.
+    if ~isfield(handles.Settings,'maxtimetodisplay'), handles.Settings.maxtimetodisplay = 10; end
+    if ~isfield(handles.Settings,'frequencylimits'), handles.Settings.frequencylimits = 'Default'; end
+    if ~isfield(handles.Settings,'calibrationtoggle'), handles.Settings.calibrationtoggle = 1; end
+    if ~isfield(handles.Settings,'maxlines'), handles.Settings.maxlines = 100; end
+    if ~isfield(handles.Settings,'colormap'), handles.Settings.colormap = 'Jet'; end
+    if ~isfield(handles.Settings,'specmagscale'), handles.Settings.specmagscale = 'Raw'; end
+    if ~isfield(handles.Settings,'username'), handles.Settings.username = 'AARAE User'; end
+    if ~isfield(handles.Settings,'recordaddress'), handles.Settings.recordaddress = 1; end
+    if ~isfield(handles.Settings,'recordIPdata'), handles.Settings.recordIPdata = 1; end
+    if ~isfield(handles.Settings,'recordlogin'), handles.Settings.recordlogin = 1; end
 else
     Settings.maxtimetodisplay = 10;
     Settings.frequencylimits = 'Default';
