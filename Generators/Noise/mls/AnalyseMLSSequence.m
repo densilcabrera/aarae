@@ -41,7 +41,7 @@ function ir = AnalyseMLSSequence(signal,offset,reps,N,DCCoupling, impalign)
 % Last modified:    09 May 2007
 %**************************************************************************
 
-error(nargchk(1,6,nargin)); % Change to allow some defaults
+narginchk(1,6); % Change to allow some defaults
 
 if (nargin < 6)
     impalign = 1; 

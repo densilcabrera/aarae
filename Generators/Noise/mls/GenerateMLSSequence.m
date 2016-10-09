@@ -22,7 +22,7 @@ function [sequence mls] = GenerateMLSSequence(repetitions, N, impalign)
 % Last modified:    09 May 2007
 %**************************************************************************
 
-error(nargchk(0,3,nargin));
+narginchk(0,3);
 if (nargin < 3)
     impalign = 1;
 end
