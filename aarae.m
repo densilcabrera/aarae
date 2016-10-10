@@ -315,7 +315,7 @@ function settings_btn_Callback(hObject, ~, handles) %#ok : Executed when Setting
 % hObject    handle to settings_btn (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-Settings = settings('main_stage1', handles.aarae);%inputdlg('Maximum time period to display','AARAE settings',[1 50],{num2str(handles.Settings.maxtimetodisplay)});
+Settings = settings_aarae('main_stage1', handles.aarae);%inputdlg('Maximum time period to display','AARAE settings',[1 50],{num2str(handles.Settings.maxtimetodisplay)});
 if ~isempty(Settings)
     %newpref = cell2struct(newpref,{'maxtimetodisplay'});
     %newpref.maxtimetodisplay = str2double(newpref.maxtimetodisplay);
