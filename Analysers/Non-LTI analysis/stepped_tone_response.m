@@ -319,13 +319,19 @@ if ~isempty(audio) && ~isempty(fs) && ~isempty(cal)
             end
             for d = d1:dim3
                 if d1 == 1
+                    try
                     THD1(1,ch,d,n) = thd(audiotemp(:,ch,d),fs,nharm);
                     SNR1(1,ch,d,n) = snr(audiotemp(:,ch,d),fs,nharm);
                     SINAD1(1,ch,d,n) = sinad(audiotemp(:,ch,d),fs);
+                    catch
+                    end
                 else
+                    try
                     THD1(1,ch,d-1,n) = thd(audiotemp(:,ch,d),fs,nharm);
                     SNR1(1,ch,d-1,n) = snr(audiotemp(:,ch,d),fs,nharm);
                     SINAD1(1,ch,d-1,n) = sinad(audiotemp(:,ch,d),fs);
+                    catch
+                    end
                 end
             end
         end
