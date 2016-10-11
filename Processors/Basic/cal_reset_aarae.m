@@ -55,7 +55,7 @@ else
 end
 
 
-
+cal(isnan(cal)) = 0;
 
 if nargin == 1
     prompt = {'Desired cal value (dB)'};
