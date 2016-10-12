@@ -2,9 +2,10 @@ AARAE - Audio and Acoustical Response Analysis Environment for MATLAB
 
 AARAE is not a stand-alone program, but runs within MATLAB. It requires the
 following toolboxes:
+* Audio System Toolbox (from AARAE Release 9, 2017)
 * DSP System Toolbox
 * Signal Processing Toolbox
-* Statistics Toolbox
+* Statistics and Machine Learning Toolbox
 Other toolboxes are also used by some parts of AARAE, including:
 * Curve Fitting Toolbox
 
@@ -25,6 +26,7 @@ in the MATLAB path. You should find all the AARAE subfolders:
     - Processors
     - Projects
     - Templates
+    - Toolboxes & General Utilities
     - Utilities
     - Workflows
 
