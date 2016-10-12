@@ -1,31 +1,29 @@
-function [OUT, varargout] = Compressor_AudioSystemToolbox(IN, Threshold,Ratio,KneeWidth,AttackTime,ReleaseTime,MakeUpGain,fs)
-% This function uses Matlab's Audio System Toolbox to apply compression
+function [OUT, varargout] = Limiter_AudioSystemToolbox(IN, Threshold,KneeWidth,AttackTime,ReleaseTime,MakeUpGain,fs)
+% This function uses Matlab's Audio System Toolbox to apply limiting
 % (dynamics processing) to the input audio.
 %
-% Refer to Matlab's help for 'compressor' for information on this.
+% Refer to Matlab's help for 'limiter' for information on this.
 if nargin ==1 
     
     param = inputdlg({'Operation threshold (dB)';... 
-        'Compression ratio';...
         'Knee width (dB)';...
         'Attack time (s)';...
         'Release time (s)';...
         'Make-up gain (dB)'},...
-        'Compressor (Audio System Toolbox) settings',... 
+        'Expander (Audio System Toolbox) settings',... 
         [1 60],... 
-        {'-10';'5'; '0';'0.05';'0.2';'0'}); 
+        {'-10'; '0';'0.05';'0.2';'0'}); 
     
     param = str2num(char(param)); 
     
-    if length(param) < 6, param = []; end 
+    if length(param) < 5, param = []; end 
     
     if ~isempty(param) 
         Threshold = param(1);
-        Ratio = param(2);
-        KneeWidth = param(3);
-        AttackTime = param(4);
-        ReleaseTime = param(5);
-        MakeUpGain = param(6);
+        KneeWidth = param(2);
+        AttackTime = param(3);
+        ReleaseTime = param(4);
+        MakeUpGain = param(5);
     else
         % get out of here if the user presses 'cancel'
         OUT = [];
@@ -46,22 +44,21 @@ end
 
 
 if ~isempty(audio) && ~isempty(fs)
-    dRC = compressor('Threshold',Threshold,...
-        'Ratio',Ratio,...
+    dRL = limiter('Threshold',Threshold,...
         'KneeWidth',KneeWidth,...
         'AttackTime',AttackTime,...
         'ReleaseTime',ReleaseTime,...
         'MakeUpGainMode', 'Property',...
         'MakeUpGain',MakeUpGain,...
         'SampleRate',fs);
-    audio = dRC(audio);
+    audio = dRL(audio);
     
   
     if isstruct(IN)
         OUT = IN; 
         OUT.audio = audio; 
-        OUT.funcallback.name = 'Compressor_AudioSystemToolbox.m'; 
-        OUT.funcallback.inarg = {Threshold,Ratio,KneeWidth,AttackTime,ReleaseTime,MakeUpGain,fs}; 
+        OUT.funcallback.name = 'Limiter_AudioSystemToolbox.m'; 
+        OUT.funcallback.inarg = {Threshold,KneeWidth,AttackTime,ReleaseTime,MakeUpGain,fs}; 
     else
         OUT = audio;
     end
