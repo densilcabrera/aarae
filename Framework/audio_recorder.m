@@ -1040,6 +1040,21 @@ if isfield(syscalstats,'cal')% && ~isnan(syscalstats.cal)
     else
         handles.savenewsyscal = 1;
         handles.syscalstats(1).cal = syscalstats.cal;
+        if isfield(syscalstats,'units')
+                         handles.syscalstats.units = syscalstats.units;
+                     else
+                         handles.syscalstats.units = 'Val';
+                     end
+                     if isfield(syscalstats,'units_ref')
+                         handles.syscalstats.units_ref = syscalstats.units_ref;
+                     else
+                         handles.syscalstats.units_ref = 1;
+                     end
+                     if isfield(syscalstats,'units')
+                         handles.syscalstats.units_type = syscalstats.units_type;
+                     else
+                         handles.syscalstats.units_type = 1;
+                     end
     end
     set(handles.cal_chk,'Enable','on','Value',1)
     set(handles.caltext,'String',[num2str(handles.syscalstats.cal) ' dB'])
