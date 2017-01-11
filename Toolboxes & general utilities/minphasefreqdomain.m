@@ -69,7 +69,9 @@ if exist('timeshift','var')
             % Find the last zero-crossing
             s=find((abs(H(:,ch))<abs([H(2:end,ch);H(1,ch)]))...
                 &(abs(H(:,ch))<abs([H(end,ch);H(1:end-1,ch)])),1,'last');
-            H(:,ch) = circshift(H(:,ch),n-s);
+            if ~isempty(s)
+                H(:,ch) = circshift(H(:,ch),n-s);
+            end
         end
         H = fft(H);
     end
