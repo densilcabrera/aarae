@@ -58,7 +58,7 @@ end
 
 
 % Pre-treatment IRs
-if cropIR == 1,
+if cropIR == 1
     trimmedIRs = autocropstart_aarae(audio,-20,2);
 else
     trimmedIRs = audio;
@@ -67,7 +67,7 @@ end
 % reset cal to 0 dB if it exists
 if isstruct(IN)
     if isfield(IN,'cal')
-        audio = cal_reset_aarae(audio,0,cal);        
+        audio = cal_reset_aarae(audio,0,IN.cal);        
     end
 end
 
