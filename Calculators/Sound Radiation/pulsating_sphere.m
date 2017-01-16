@@ -717,7 +717,7 @@ switch method
         f = 20:20000;
         k = 2*pi*f./c;
         Zrad = rho * c * (1i*k*a)./(1+1i*k*a); % radiation impedance
-        Power = rho * c * k.^2 .* v0.^2 ./(4*pi);
+        Power = rho * c * k.^2 .* v0.^2 ./(8*pi);
         
         figure1 = figure('Name','Pulsating sphere');
         axes1 = axes('Parent',figure1);

@@ -163,11 +163,11 @@ switch method
             'Name', 'Circular piston in infinite baffle');
         ax0 = axes('Parent',fig0,'CLim', [-180 180]);
         
-        ax0.DataAspectRatio = [1 1 1];
+        %ax0.DataAspectRatio = [1 1 1];
         ax0.PlotBoxAspectRatio = [1 1 1];
         
         hold(ax0,'on');
-        h=surf(pow2db(abs(p)./2e-5),'Parent',ax0);
+        h=surf(X,Y,pow2db(abs(p)./2e-5),'Parent',ax0);
         h.CData = 180.*angle(p)./pi;
         h.FaceColor = 'flat'; % 'interp' does not work for circular colormaps
         h.EdgeLighting = 'gouraud';
@@ -177,6 +177,8 @@ switch method
         h.DiffuseStrength = 1;
         h.EdgeAlpha = 0.1;
         title([num2str(f) ' Hz, source radius = ' num2str(a) ' m'])
+        xlim([min(min(X)) max(max(X))]);
+        ylim([min(min(Y)) max(max(Y))]);
         camlight left
         %     set(gca, 'DataAspectRatio', [1 1 1])
         %     set(gca, 'PlotBoxAspectRatio', [1 1 1])
@@ -338,7 +340,7 @@ switch method
             if mod(fcount,4)==1
                 ylabel('Value (dB)')
             end
-            if fcount==12;
+            if fcount==12
                 legend('show','Location','southeast');
             end
             set(axes1,'XGrid','on','XMinorTick','on','XScale','log','YGrid','on')
@@ -368,7 +370,7 @@ switch method
             if mod(fcount,4)==1
                 ylabel('Level (dB)')
             end
-            if fcount==12;
+            if fcount==12
                 legend(h,'Location','southwest');
             end
             set(axes1,'XGrid','on','XMinorTick','on','XScale','log','YGrid','on')
@@ -769,7 +771,7 @@ switch method
                 'Z coordinate (vertical distance) (m)'},...
                 'Circular Piston Radiation Input Parameters',...
                 [1 80],...
-                {'342', '1.225', '0.0001', '0.2', '2'});
+                {'342', '1.225', '0.0001', '0.2', '2','0','0','0'});
             if length(param) < 5, param = []; end
             if ~isempty(param)
                 c = str2num(char(param(1)));
@@ -787,10 +789,48 @@ switch method
                 return
             end
         end
-        
-        warndlg('SORRY - CODE FOR THIS OPTION IS NOT WRITTEN YET')
-        OUT = [];
-        return
+        % CREATE SOURCE ARRAY (upper half)
+            subsourcespacing = 0.125*c/24000; % 1/8 wavelength @ Nyquist freq
+            Ys=-a:subsourcespacing:a;
+            Yslen = length(Ys);
+            Zs = (0:subsourcespacing:a)';
+            Zslen = length(Zs);
+            Ys = repmat(Ys,[Zslen,1]);
+            Zs = repmat(Zs,[1,Yslen]);
+            semicircle = abs(Ys+1i*Zs)<= a;
+            Ys = Ys(semicircle); % Y subsource coordinates
+            Zs = Zs(semicircle); % Z subsource coordinates
+            N = length(Ys);
+            
+            %'Pressure only [1]; Pressure and radial particle velocity [2];Pressure and XY particle velocity [3]';
+            
+            karray = 2.*pi.*(1:24000)'./c;
+            OUT.audio = zeros(48001,1);
+            Pspectrum = zeros(length(karray),1);
+            Qs = subsourcespacing.^2 .* v0 ./ (pi*a.^2);
+            Z0term = 2.*((-1i.*rho.*c.*karray)./(4.*pi)).*Qs; % pre-calculate for speed
+                Z1term = 2.*Z0term;
+                for J = 1:N
+                    r = (X.^2 + (Ys(J)-Y).^2 + (Zs(J)-Z).^2).^0.5;
+                    if Zs(J) == 0
+                        Pspectrum = Pspectrum + Z0term.*(exp(1i.*karray.*r)./r);
+                    else
+                        Pspectrum = Pspectrum + Z1term.*(exp(1i.*karray.*r)./r);
+                    end
+                end
+            Pspectrum(isnan(Pspectrum)) = 0;
+            if val1 == 2 % Pressure and radial particle velocity
+                
+            elseif val1 == 3 % Pressure and XY particle velocity
+                
+            end
+            OUT.audio(:,1) = ifftshift(ifft([0;Pspectrum;flip(conj(Pspectrum))]));
+            %OUT.chanID = makechanID(length(angledeg),2,[Xval,Yval,Zval]);
+            OUT.fs = 48000;
+            OUT.cal = zeros(1,size(OUT.audio,2));
+            OUT.properties.units = 'Pa';
+            OUT.properties.units_ref = 2e-5;
+            OUT.properties.units_type = 1;
     case 5
         if nargin == 0
             param = inputdlg({'Speed of sound in medium (m/s)';...
