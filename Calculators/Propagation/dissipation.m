@@ -138,10 +138,10 @@ if nargin == 0
 else
     OUT = alpha;
 end
-
-OUT.funcallback.name = 'dissipation.m';
-OUT.funcallback.inarg = {frequencies, temperatures, relhumidities, pressures, doplot};
-    
+if isstruct(OUT)
+    OUT.funcallback.name = 'dissipation.m';
+    OUT.funcallback.inarg = {frequencies, temperatures, relhumidities, pressures, doplot};
+end
 
 % PLOTTING
 if doplot
