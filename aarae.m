@@ -23,7 +23,7 @@ function varargout = aarae(varargin)
 
 % Edit the above text to modify the response to help aarae
 
-% Last Modified by GUIDE v2.5 15-Sep-2016 21:02:25
+% Last Modified by GUIDE v2.5 14-Feb-2017 16:48:12
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -82,11 +82,12 @@ setappdata(hMain,'testsignal',[]);
 setappdata(hMain,'audio_recorder_input',1)
 setappdata(hMain,'audio_recorder_output',1)
 setappdata(hMain,'audio_recorder_numchs',1)
+setappdata(hMain,'audio_recorder_numchsout',1)
 setappdata(hMain,'audio_recorder_duration',1)
 setappdata(hMain,'audio_recorder_fs',48000)
 %setappdata(hMain,'audio_recorder_nbits',16)
-setappdata(hMain,'audio_recorder_qdur',0.1) % set by testing on Matlab 2015b
-setappdata(hMain,'audio_recorder_buffer',8192) % set by testing on Matlab 2015b
+setappdata(hMain,'audio_recorder_ASIO',0) % redundant
+setappdata(hMain,'audio_recorder_buffer',2048) % 
 setappdata(hMain,'audio_recorder_silencerequest',0)
 setappdata(hMain,'audio_recorder_playbackdelay',0)
 setappdata(hMain,'trim_method_after_convolution',1)
@@ -5134,7 +5135,53 @@ eval(['doc ' selection])
 % *************************************************************************
 % SELECT CHANNEL TO DISPLAY
 % *************************************************************************
+% --- Executes during object creation, after setting all properties.
+function chandisp_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to chandisp (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
 
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+set(hObject,'String',{'Input Channels'; 'Output Channels'})
+
+% --- Executes on selection change in chandisp.
+function chandisp_Callback(hObject, eventdata, handles)
+% hObject    handle to chandisp (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns chandisp contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from chandisp
+
+hMain = getappdata(0,'hMain');
+signaldata = getappdata(hMain,'testsignal'); % Get leaf contents from the 'desktop'
+channel = str2double(get(handles.IN_nchannel,'String'));
+switch get(handles.chandisp, 'Value')
+    case 1
+        set(handles.tchannels,'String',['/ ' num2str(size(signaldata.audio,2))]);
+if (channel <= size(signaldata.audio,2)) && (channel > 0) && ~isnan(channel)
+    refreshplots(handles,'time')
+    refreshplots(handles,'freq')
+else
+    warndlg('Invalid channel');
+    set(handles.IN_nchannel,'String',num2str(handles.channel));
+end
+    case 2
+        set(handles.tchannels,'String',['/ ' num2str(size(signaldata.audio,5))]);
+        if (channel <= size(signaldata.audio,5)) && (channel > 0) && ~isnan(channel)
+            refreshplots(handles,'time')
+            refreshplots(handles,'freq')
+        else
+            warndlg('Invalid channel');
+            set(handles.IN_nchannel,'String',num2str(handles.channel));
+        end
+        
+end
+guidata(hObject,handles);
 
 function IN_nchannel_Callback(hObject, ~, handles) %#ok
 % hObject    handle to IN_nchannel (see GCBO)
@@ -5146,13 +5193,24 @@ function IN_nchannel_Callback(hObject, ~, handles) %#ok
 hMain = getappdata(0,'hMain');
 signaldata = getappdata(hMain,'testsignal'); % Get leaf contents from the 'desktop'
 channel = str2double(get(handles.IN_nchannel,'String'));
-
+switch get(handles.chandisp, 'Value')
+    case 1
 if (channel <= size(signaldata.audio,2)) && (channel > 0) && ~isnan(channel)
     refreshplots(handles,'time')
     refreshplots(handles,'freq')
 else
     warndlg('Invalid channel');
     set(handles.IN_nchannel,'String',num2str(handles.channel));
+end
+    case 2
+        if (channel <= size(signaldata.audio,5)) && (channel > 0) && ~isnan(channel)
+            refreshplots(handles,'time')
+            refreshplots(handles,'freq')
+        else
+            warndlg('Invalid channel');
+            set(handles.IN_nchannel,'String',num2str(handles.channel));
+        end
+        
 end
 guidata(hObject,handles);
 
@@ -5188,6 +5246,7 @@ function aarae_WindowButtonDownFcn(hObject, ~, handles) %#ok
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 click = get(hObject,'CurrentObject');
+
 if ~isempty(click) && ((click == handles.axestime) || (get(click,'Parent') == handles.axestime))
     hMain = getappdata(0,'hMain');
     signaldata = getappdata(hMain,'testsignal');
@@ -5203,7 +5262,15 @@ if ~isempty(click) && ((click == handles.axestime) || (get(click,'Parent') == ha
         if ~ismatrix(data)
             channel = str2double(get(handles.IN_nchannel,'String'));
             if handles.alternate == 0
-                linea(:,:) = data(To:Tf,channel,:);
+                switch get(handles.chandisp, 'Value')
+                    case 1
+                        linea(:,:) = data(To:Tf,channel,:);
+                    case 2 
+                        nbands = size(data,3);
+                        for i = 1:size(data,2)
+                            linea(:,(i-1)*nbands+1:i*nbands,1) = data(To:Tf,i,:,:,channel);
+                        end
+                end
             else
                 linea(:,:) = data(:,channel,:);
             end
@@ -5304,7 +5371,11 @@ if ~isempty(click) && ((click == handles.axestime) || (get(click,'Parent') == ha
                     end
                 end
                 signaldata.cal(isnan(signaldata.cal)) = 0;
-                cal = repmat(signaldata.cal(str2double(get(handles.IN_nchannel,'String'))),1,size(linea,2));
+                if get(handles.chandisp, 'Value') == 2
+                    cal = signaldata.cal;
+                else
+                    cal = repmat(signaldata.cal(str2double(get(handles.IN_nchannel,'String'))),1,size(linea,2));
+                end
                 linea = linea.*repmat(10.^(cal./20),length(linea),1);
             end
         else
@@ -5572,7 +5643,15 @@ if ~isempty(click) && ((click == handles.axesfreq) || (get(click,'Parent') == ha
         if ~ismatrix(data)
             channel = str2double(get(handles.IN_nchannel,'String'));
             if handles.alternate == 0
-                linea(:,:) = data(To:Tf,channel,:);
+                switch get(handles.chandisp, 'Value')
+                    case 1
+                        linea(:,:) = data(To:Tf,channel,:);
+                    case 2 
+                        nbands = size(data,3);
+                        for i = 1:size(data,2)
+                            linea(:,(i-1)*nbands+1:i*nbands,1) = data(To:Tf,i,:,:,channel);
+                        end
+                end
             else
                 linea(:,:) = data(:,channel,:);
             end
@@ -6438,7 +6517,7 @@ Xvalues = get(handles.Xvalues_sel,'SelectedObject');
 Xvalues = get(Xvalues,'tag');
 switch Xvalues
     case 'radiobutton1'
-        bar(handles.axesdata,data.tables(ntable).Data(:,get(handles.Yvalues_box,'Value')),'FaceColor',[0 0.5 0.5])
+        bar(handles. data,data.tables(ntable).Data(:,get(handles.Yvalues_box,'Value')),'FaceColor',[0 0.5 0.5])
         set(handles.axesdata,'Xtick',1:length(data.tables(ntable).RowName),'XTickLabel',data.tables(ntable).RowName)
     case 'radiobutton2'
         bar(handles.axesdata,data.tables(ntable).Data(get(handles.Yvalues_box,'Value'),:),'FaceColor',[0 0.5 0.5])

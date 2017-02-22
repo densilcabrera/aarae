@@ -2,9 +2,24 @@ function refreshplots(handles,axes)
 
 selectedNodes = handles.mytree.getSelectedNodes;
 signaldata = selectedNodes(1).handle.UserData;
+
+% % % find dimension of plot (input or output channel)
+% % switch get(handles.chandisp, 'Value')
+% %     case 1 
+% %         chandim = 2;
+% %     case 2
+% %         chandim = 5;
+% % end
+% %         
 %if isa(signaldata.audio,'memmapfile'), signaldata.audio = signaldata.audio.Data; end
 if ~ismatrix(signaldata.audio)
-    linea(:,:) = signaldata.audio(:,str2double(get(handles.IN_nchannel,'String')),:);
+    % consider writing better code than this? it may take a long time for large
+    % data
+    if get(handles.chandisp, 'Value') == 2
+        linea(:,:,:,:,1) = signaldata.audio(:,:,:,:,str2double(get(handles.IN_nchannel,'String')));
+    else
+        linea(:,:) = signaldata.audio(:,str2double(get(handles.IN_nchannel,'String')),:);
+    end
 else
     linea = signaldata.audio;
 end
@@ -99,7 +114,11 @@ if isfield(signaldata,'cal') && handles.Settings.calibrationtoggle == 1
             linea = linea * units_ref.^0.5;
             signaldata.cal = signaldata.cal ./ 10.^(units_ref/10);
         end
-        cal = repmat(signaldata.cal(str2double(get(handles.IN_nchannel,'String'))),1,size(linea,2));
+        if get(handles.chandisp, 'Value') == 2
+            cal = signaldata.cal;
+        else
+            cal = repmat(signaldata.cal(str2double(get(handles.IN_nchannel,'String'))),1,size(linea,2));
+        end
         linea = linea.*repmat(10.^(cal./20),length(linea),1);
     end
 else

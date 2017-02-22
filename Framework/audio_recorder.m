@@ -23,16 +23,16 @@ function varargout = audio_recorder(varargin)
 
 % Edit the above text to modify the response to help audio_recorder
 
-% Last Modified by GUIDE v2.5 29-Sep-2016 15:39:00
+% Last Modified by GUIDE v2.5 15-Feb-2017 15:01:34
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
-                   'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @audio_recorder_OpeningFcn, ...
-                   'gui_OutputFcn',  @audio_recorder_OutputFcn, ...
-                   'gui_LayoutFcn',  [] , ...
-                   'gui_Callback',   []);
+    'gui_Singleton',  gui_Singleton, ...
+    'gui_OpeningFcn', @audio_recorder_OpeningFcn, ...
+    'gui_OutputFcn',  @audio_recorder_OutputFcn, ...
+    'gui_LayoutFcn',  [] , ...
+    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
@@ -55,8 +55,6 @@ end
 % the previous versions.
 
 
-
-
 % --- Executes just before audio_recorder is made visible.
 function audio_recorder_OpeningFcn(hObject, ~, handles, varargin)
 % This function has no output args, see OutputFcn.
@@ -71,8 +69,8 @@ function audio_recorder_OpeningFcn(hObject, ~, handles, varargin)
 dontOpen = false;
 mainGuiInput = find(strcmp(varargin, 'main_stage1'));
 if (isempty(mainGuiInput)) ...
-    || (length(varargin) <= mainGuiInput) ...
-    || (~ishandle(varargin{mainGuiInput+1}))
+        || (length(varargin) <= mainGuiInput) ...
+        || (~ishandle(varargin{mainGuiInput+1}))
     dontOpen = true;
 else
     % Remember the handle, and adjust our position
@@ -89,14 +87,42 @@ else
     UserData.state = false;
     set(handles.stop_btn,'UserData',UserData);
     mainHandles = guidata(handles.main_stage1);
-    inputdevinfo = dspAudioDeviceInfo('inputs');
-    inputnames = {inputdevinfo.name}';
+    %*****    inputdevinfo = dspAudioDeviceInfo('inputs');
+    try % for windows machines look for ASIO device.. Consider adding a tick box to use ASIO|Direct Sound. This would need to be added in settings
+        aDW = audioDeviceWriter('Driver', 'ASIO');
+        inputnames = getAudioDevices(aDW);
+        if isfield(inputnames, 'No audio ouput device detected')
+            delete(aDW)
+            error('No ASIO Device Detected')
+        else
+        end
+        aDR = audioDeviceReader('Driver', 'ASIO');
+        outputnames = getAudioDevices(aDR);
+        if isfield(outputnames, 'No audio ouput device detected')
+            error('No ASIO Device Detected')
+        else
+        end
+        release(aDW)
+        release(aDR)
+        handles.ASIO =1;
+        delete(aDW)
+        delete(aDR)
+        if getappdata(hMain, 'audio_recorder_ASIO') == 0 && handles.ASIO == 1
+            h = helpdlg('ASIO device detected. Adjust buffer in ASIO device control panel to match user input');
+            uiwait(h)
+            setappdata(hMain,'audio_recorder_ASIO',1)
+        end
+    catch
+        devinfo = audiodevinfo;
+        inputnames = {devinfo.input.Name};
+        outputnames = {devinfo.output.Name};
+        handles.ASIO=0;
+    end
     inputnames = regexprep(inputnames,'\s\(Windows DirectSound\)','');
     inputnames = regexprep(inputnames,'\s\(ASIO\)','');
     inputnames = regexprep(inputnames,'\s\(Core Audio\)','');
     set(handles.inputdev_popup,'String',inputnames)
-    outputdevinfo = dspAudioDeviceInfo('outputs');
-    outputnames = {outputdevinfo.name}';
+    %*****    outputdevinfo = dspAudioDeviceInfo('outputs');
     outputnames = regexprep(outputnames,'\s\(Windows DirectSound\)','');
     outputnames = regexprep(outputnames,'\s\(ASIO\)','');
     outputnames = regexprep(outputnames,'\s\(Core Audio\)','');
@@ -107,6 +133,7 @@ else
         mainHandles = guidata(handles.main_stage1);
         selectednode = mainHandles.mytree.getSelectedNodes;
         set(handles.pb_enable,'Visible','on','Value',1);
+        set(handles.nattempt,'Visible','on');
         set(handles.IN_name,'String',['rec_' selectednode(1).getName.char])
         handles.outputdata = handles.signaldata;
         if mainHandles.alternate==1 && isfield(handles.outputdata,'audio2')
@@ -122,9 +149,7 @@ else
         output_settings{3} = ['Sampling frequency = ',num2str(handles.outputdata.fs),' samples/s'];
         %output_settings{4} = ['Bit depth = ',num2str(handles.outputdata.nbits)];
         output_settings{4} = ['Duration = ',num2str(handles.dur),' s'];
-        set(handles.IN_numchsout,'String','1')
-        % currently channel mapping of output is only allowed for mono
-        % signals
+        
         if size(handles.outputdata.audio,2) == 1
             set([handles.text25,handles.IN_numchsout,handles.sim_chk],'Visible','on')
         else
@@ -138,13 +163,14 @@ else
         set(handles.inputdev_popup,'Value',getappdata(hMain,'audio_recorder_input'));
         set(handles.outputdev_popup,'Value',getappdata(hMain,'audio_recorder_output'));
         set(handles.IN_numchs,'String',num2str(getappdata(hMain,'audio_recorder_numchs')));
+        set(handles.IN_numchsout,'String',num2str(getappdata(hMain,'audio_recorder_numchsout')));
         set(handles.text1,'String','Add time');
         set(handles.IN_duration,'String',num2str(getappdata(hMain,'audio_recorder_duration')));
         set(handles.IN_fs,'Enable','off');
         set(handles.IN_fs,'String','-');
         %set(handles.IN_nbits,'Enable','off');
         %set(handles.IN_nbits,'String','-');
-        set(handles.IN_qdur,'String',num2str(getappdata(hMain,'audio_recorder_qdur')));
+        set(handles.recorder_instructions,'String','Instructions');
         set(handles.IN_buffer,'String',num2str(getappdata(hMain,'audio_recorder_buffer')));
         handles.numchs = str2num(get(handles.IN_numchs,'String'));
         handles.addtime = str2double(get(handles.IN_duration,'String'));
@@ -156,14 +182,16 @@ else
         set(handles.Playback_delay,'String',num2str(getappdata(hMain,'audio_recorder_playbackdelay')));
         handles.fs = handles.outputdata.fs;
         %handles.nbits = handles.outputdata.nbits;
-        handles.qdur = str2double(get(handles.IN_qdur,'String'));
+        %         handles.recorder_instructions = str2double(get(handles.recorder_instructions,'String'));
         handles.buffer = str2double(get(handles.IN_buffer,'String'));
-        xlim(handles.IN_axes,[0 round(handles.dur+handles.addtime)])
-        xlim(handles.OUT_axes,[0 round(handles.dur+handles.addtime)])
+        xlim(handles.IN_axes,[0 handles.dur+handles.addtime])
+        xlim(handles.OUT_axes,[0 handles.dur+handles.addtime])
     else
         % If there's no signal loaded in the desktop just allocate memory
         % space for the signal to be recorded
         set(handles.pb_enable,'Visible','off','Value',0);
+        set(handles.nattempt,'Visible','off');
+        set(handles.attempt_text,'Visible','off');
         set(handles.output_panel,'Visible','off');
         set(handles.text1,'String','Duration');
         set(handles.IN_name,'String','recording')
@@ -174,7 +202,8 @@ else
         set(handles.IN_fs,'String',num2str(getappdata(hMain,'audio_recorder_fs')));
         %set(handles.IN_nbits,'Enable','on');
         %set(handles.IN_nbits,'String',num2str(getappdata(hMain,'audio_recorder_nbits')));
-        set(handles.IN_qdur,'String',num2str(getappdata(hMain,'audio_recorder_qdur')));
+        %         set(handles.recorder_instructions,'String',num2str(getappdata(hMain,'audio_recorder_qdur')));
+        set(handles.recorder_instructions,'String','Instructions!');
         set(handles.IN_buffer,'String',num2str(getappdata(hMain,'audio_recorder_buffer')));
         set(handles.OUT_axes,'Visible','off');
         set(handles.audio_recorder,'Position',handles.position-[0 0 0 handles.OUT_axes_position(4)]);
@@ -187,10 +216,10 @@ else
         handles.dur = str2double(get(handles.IN_duration,'String'));
         handles.fs = str2double(get(handles.IN_fs,'String'));
         %handles.nbits = str2double(get(handles.IN_nbits,'String'));
-        handles.qdur = str2double(get(handles.IN_qdur,'String'));
+        handles.recorder_instructions = get(handles.recorder_instructions,'String');
         handles.buffer = str2double(get(handles.IN_buffer,'String'));
-        xlim(handles.IN_axes,[0 round(handles.dur)])
-        xlim(handles.OUT_axes,[0 round(handles.dur)])
+        xlim(handles.IN_axes,[0 handles.dur])
+        xlim(handles.OUT_axes,[0 handles.dur])
     end
     if isfield(mainHandles,'syscalstats') && ~isempty(mainHandles.syscalstats)
         handles.savenewsyscal = 0;
@@ -225,15 +254,15 @@ end
 guidata(hObject, handles);
 
 if dontOpen
-   disp('-----------------------------------------------------');
-   disp('This function is part of the AARAE framework, it is') 
-   disp('not a standalone function. To call this function,')
-   disp('click on the appropriate calling button on the main');
-   disp('Window. E.g.:');
-   disp('   Record');
-   disp('-----------------------------------------------------');
+    disp('-----------------------------------------------------');
+    disp('This function is part of the AARAE framework, it is')
+    disp('not a standalone function. To call this function,')
+    disp('click on the appropriate calling button on the main');
+    disp('Window. E.g.:');
+    disp('   Record');
+    disp('-----------------------------------------------------');
 else
-   uiwait(hObject);
+    uiwait(hObject);
 end
 
 % UIWAIT makes audio_recorder wait for user response (see UIRESUME)
@@ -241,7 +270,7 @@ end
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = audio_recorder_OutputFcn(hObject, ~, handles) 
+function varargout = audio_recorder_OutputFcn(hObject, ~, handles)
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -287,8 +316,8 @@ if get(handles.SilenceRequestCheckBox,'Value') == 1
     outputs = cellstr(get(handles.outputdev_popup,'String'));
     outputdevname = outputs{get(handles.outputdev_popup,'Value')};
     
-        % Set playback audio
-    handles.hsr1 = dsp.SignalSource;
+    % Set playback audio for play/record routine
+    handles.hsr1 = dsp.SignalSource('SamplesPerFrame', handles.buffer); %dsp.AudioFileReader is still supported as of 2016b
     if handles.silenceplease.fs ~= fs
         gcd_fs = gcd(handles.silenceplease.fs,fs); % greatest common denominator
         thankyou = resample(handles.silenceplease.audio,fs/gcd_fs,handles.silenceplease.fs/gcd_fs);
@@ -297,36 +326,59 @@ if get(handles.SilenceRequestCheckBox,'Value') == 1
     end
     thankyou = thankyou(:,1,1,1,1,1); % make sure it is 1 channel (it should be anyway)
     if length(str2num(get(handles.IN_numchsout,'String'))) > 1
-            thankyou = repmat(thankyou,1,length(str2num(get(handles.IN_numchsout,'String'))));
+        thankyou = repmat(thankyou,1,length(str2num(get(handles.IN_numchsout,'String'))));
     end
-    handles.hap = dsp.AudioPlayer('DeviceName',outputdevname,...
-        'SampleRate',fs,...
-        'QueueDuration',handles.qdur,...
-        'BufferSizeSource','Property',...
-        'BufferSize',handles.buffer);
+    handles.hsr1.Signal = thankyou;
+    handles.hsr1.SamplesPerFrame = handles.buffer;
+    %    setup(handles.hsr1);
     
-    %if get(handles.invfilter_chk,'Value') == 1, quietplease = filter(handles.syscalstats.audio2,1,quietplease); end
-    handles.hsr1.Signal = [thankyou;zeros(floor(handles.hap.QueueDuration*handles.fs),1)];
-    handles.hsr1.SamplesPerFrame = 2048;
+    switch handles.ASIO
+        case 0
+            handles.hap = audioDeviceWriter(...
+                'BitDepth', '24-bit integer',...
+                'SampleRate',fs,...
+                'BufferSize', handles.buffer,...
+                'SupportVariableSizeInput', 0,...
+                'ChannelMappingSource', 'Property',...
+                'ChannelMapping', str2num(get(handles.IN_numchsout, 'String')),...
+                'Device', outputdevname);
+        case 1
+            % consider adding a check that the asio buffer is the same as
+            % the user buffer.
+            handles.hap = audioDeviceWriter(...
+                'Driver', 'ASIO',...
+                'BitDepth', '24-bit integer',...
+                'SampleRate',fs,...
+                'BufferSize', handles.buffer,...
+                'SupportVariableSizeInput', 0,...
+                'ChannelMappingSource', 'Property',...
+                'ChannelMapping', str2num(get(handles.IN_numchsout, 'String')),...
+                'Device', outputdevname);
+    end
+    %     setup(handles.hap,...
+    %         zeros(handles.hsr1.SamplesPerFrame,...
+    %         length(str2num(get(handles.IN_numchsout, 'String')))));
+    
     guidata(hObject,handles)
     ncycles = ceil(length(handles.hsr1.Signal)/handles.hsr1.SamplesPerFrame);
     set(hObject,'BackgroundColor','red');
     set(handles.stop_btn,'Visible','on');
     % Initialize playback routine
     pause on
-        %UserData = get(handles.stop_btn,'UserData');
-        h = helpdlg('Silence request. Press OK to start recording.','AARAE info');
-        for i = 1:ncycles
-           UserData = get(handles.stop_btn,'UserData');
-           if UserData.state == false
-               step(handles.hap,step(handles.hsr1));
-           else
-               break
-           end
-           %waitbar(i/ncycles,h)
-           pause(0.0000001)
+    %UserData = get(handles.stop_btn,'UserData');
+    h = helpdlg('Silence request. Press OK to start recording.','AARAE info');
+    for i = 1:ncycles
+        UserData = get(handles.stop_btn,'UserData');
+        if UserData.state == false
+            handles.hap(handles.hsr1());
+        else
+            break
         end
-        %if i == ncycles, delete(h); end
+        %waitbar(i/ncycles,h)
+    end
+    %if i == ncycles, delete(h); end
+    % Pause to wait for audioDeviceWriter
+    pause(length(handles.hsr1.Signal)/fs)
     pause off
     % Release playback and audio data objects
     release(handles.hap)
@@ -344,57 +396,96 @@ if get(handles.pb_enable,'Value') == 1
     % Set playback object
     outputs = cellstr(get(handles.outputdev_popup,'String'));
     outputdevname = outputs{get(handles.outputdev_popup,'Value')};
-    handles.hap = dsp.AudioPlayer('DeviceName',outputdevname,...
-        'SampleRate',handles.outputdata.fs,...
-        'QueueDuration',handles.qdur,...
-        'BufferSizeSource','Property',...
-        'BufferSize',handles.buffer);
+    switch handles.ASIO
+        case 0
+            handles.hap = audioDeviceWriter(...
+                'BitDepth', '24-bit integer',...
+                'SampleRate',handles.outputdata.fs,...
+                'BufferSize', handles.buffer,...
+                'SupportVariableSizeInput', 0,...
+                'ChannelMappingSource', 'Property',...
+                'ChannelMapping', str2num(get(handles.IN_numchsout, 'String')),...
+                'Device', outputdevname);
+        case 1
+            handles.hap = audioDeviceWriter(...
+                'Driver', 'ASIO',...
+                'BitDepth', '24-bit integer',...
+                'SampleRate',handles.outputdata.fs,...
+                'BufferSize', handles.buffer,...
+                'SupportVariableSizeInput', 0,...
+                'ChannelMappingSource', 'Property',...
+                'ChannelMapping', str2num(get(handles.IN_numchsout, 'String')),...
+                'Device', outputdevname);
+    end
+    
     % Set record object
     inputs = cellstr(get(handles.inputdev_popup,'String'));
     inputdevname = inputs{get(handles.inputdev_popup,'Value')};
-    handles.har = dsp.AudioRecorder('DeviceName',inputdevname,...
-        'SampleRate',handles.outputdata.fs,...
-        'QueueDuration',handles.qdur,...
-        'OutputDataType','double',...
-        'ChannelMappingSource','Property',...
-        'ChannelMapping',handles.numchs,...
-        'BufferSizeSource','Property',...
-        'BufferSize',handles.buffer);
+    switch handles.ASIO
+        case 0
+            handles.har = audioDeviceReader(...
+                'Device',inputdevname,...
+                'SampleRate',handles.outputdata.fs,...
+                'BitDepth', '24-bit integer',...
+                'OutputDataType','double',...
+                'ChannelMappingSource','Property',...
+                'ChannelMapping',handles.numchs,...
+                'SamplesPerFrame',handles.buffer);
+        case 1
+            handles.har = audioDeviceReader(...
+                'Driver', 'ASIO',...
+                'Device',inputdevname,...
+                'SampleRate',handles.outputdata.fs,...
+                'BitDepth', '24-bit integer',...
+                'OutputDataType','double',...
+                'ChannelMappingSource','Property',...
+                'ChannelMapping',handles.numchs,...
+                'SamplesPerFrame',handles.buffer);
+    end
+    %     setup(handles.har)
+    
     % Set playback audio
-    handles.hsr1 = dsp.SignalSource;
+    handles.hsr1 = dsp.SignalSource('SamplesPerFrame', handles.buffer);
     if size(handles.outputdata.audio,2) == 1 && length(str2num(get(handles.IN_numchsout,'String'))) > 1
-        if get(handles.sim_chk,'Value') == 1
-            playbackaudio = repmat(handles.outputdata.audio,1,length(str2num(get(handles.IN_numchsout,'String'))));
-            addtimeok = false;
+        if isfield(handles.syscalstats, 'latency') && get(handles.delay_chk,'Value') == 1
+            handles.toremove = zeros(handles.syscalstats.latency,1);
         else
-            playbackaudio = zeros((length(handles.outputdata.audio)+floor(handles.addtime*handles.fs))*length(str2num(get(handles.IN_numchsout,'String'))),length(str2num(get(handles.IN_numchsout,'String'))));
-            j = 1;
-            playbackaudio(1:length(handles.outputdata.audio),j) = handles.outputdata.audio;
-            for j = length(str2num(get(handles.IN_numchsout,'String')))-1
-                playbackaudio((length(handles.outputdata.audio)+floor(handles.addtime*handles.fs))*j+1:(length(handles.outputdata.audio)+floor(handles.addtime*handles.fs))*j+length(handles.outputdata.audio),j+1) = handles.outputdata.audio;
-            end
-            addtimeok = true;
+            handles.toremove = [];
+        end
+        if get(handles.sim_chk,'Value') == 1
+            playbackaudio = repmat([handles.outputdata.audio;handles.toremove],1,length(str2num(get(handles.IN_numchsout,'String'))));
+            %             addtimeok = false;
+        else
+            playbackaudio = [handles.outputdata.audio;handles.toremove];
         end
     else
-        playbackaudio = handles.outputdata.audio;
-        addtimeok = false;
+        if isfield(handles.syscalstats, 'latency') && get(handles.delay_chk,'Value') == 1
+            handles.toremove = zeros(handles.syscalstats.latency, size(handles.outputdata.audio,2));
+        else
+            handles.toremove = [];
+        end
+        playbackaudio = [handles.outputdata.audio;handles.toremove];
     end
     playbackdelay = str2num(get(handles.Playback_delay,'String'));
     %if get(handles.invfilter_chk,'Value') == 1, playbackaudio = filter(handles.syscalstats.audio2,1,playbackaudio); end
-    if ~addtimeok
-        handles.hsr1.Signal = [zeros(floor(playbackdelay*handles.fs),size(playbackaudio,2));...
-            playbackaudio;...
-            zeros(floor((handles.addtime+handles.hap.QueueDuration)*handles.fs),size(playbackaudio,2))];
-    else
-        handles.hsr1.Signal = [zeros(floor(playbackdelay*handles.fs),size(playbackaudio,2));...
-            playbackaudio;...
-            zeros(floor(handles.hap.QueueDuration*handles.fs),size(playbackaudio,2))];
-    end
+    % addtime ok recorder_instructions
+    handles.hsr1.Signal = [zeros(floor(playbackdelay*handles.fs),size(playbackaudio,2));...
+        playbackaudio;...
+        zeros(floor((handles.addtime)*handles.fs),size(playbackaudio,2))];
     handles.hsr1.SamplesPerFrame = handles.har.SamplesPerFrame;
+    setup(handles.hsr1)
     guidata(hObject,handles)
     handles.rec = [];
     ncycles = ceil(length(handles.hsr1.Signal)/handles.har.SamplesPerFrame);
-    audio = zeros(ncycles*handles.har.SamplesPerFrame,length(handles.numchs));
+    if get(handles.sim_chk,'Value') == 0
+        if length(str2num(get(handles.IN_numchsout,'String'))) >1
+        audio = zeros(ncycles*handles.har.SamplesPerFrame,length(handles.numchs),1,1,length(str2num(get(handles.IN_numchsout,'String'))));
+        else
+            audio = zeros(ncycles*handles.har.SamplesPerFrame,length(handles.numchs));
+        end
+    else
+        audio = zeros(ncycles*handles.har.SamplesPerFrame,length(handles.numchs));
+    end
     set(hObject,'BackgroundColor','red');
     set(handles.stop_btn,'Visible','on');
     % Initialize playback/record routine
@@ -403,17 +494,203 @@ if get(handles.pb_enable,'Value') == 1
         UserData = get(handles.stop_btn,'UserData');
         h = waitbar(0,'Recording in progress...','Name','AARAE info');
         handles.recordtime = datestr(now);
-        for i = 1:ncycles
-           UserData = get(handles.stop_btn,'UserData');
-           if UserData.state == false
-               audio((i-1)*handles.har.SamplesPerFrame+1:i*handles.har.SamplesPerFrame,:) = step(handles.har);
-               step(handles.hap,step(handles.hsr1));
-           else
-               break
-           end
-           waitbar(i/ncycles,h)
-           pause(0.0000001)
+        OutCh = str2num(get(handles.IN_numchsout,'String'));
+        totalUnderrun = 0;
+        numUnderrun = zeros(size(audio(:,1,1,1,:)));
+        numOverrun = zeros(size(audio(:,1,1,1,:)));
+        totalOverrun=0;
+        if get(handles.test, 'Value') == 1
+            nattempt = str2num(get(handles.nattempt,'String'));
+            if isempty(nattempt)
+                nattempt = 0;
+            end
+            switch get(handles.sim_chk,'Value')
+                case 0
+                    dummy = zeros(handles.hsr1.SamplesPerFrame,1);
+                    for outind = 1:length(OutCh)
+                        release(handles.hap)
+                        handles.hap.ChannelMapping = OutCh(outind);
+                        setup(handles.hap,dummy)
+                        [~] = handles.har();
+                        handles.hap(dummy);
+                        for i = 1:ncycles
+                            UserData = get(handles.stop_btn,'UserData');
+                            if UserData.state == false
+                                [audio((i-1)*handles.har.SamplesPerFrame+1:i*handles.har.SamplesPerFrame,:,1,1,outind),numOverrun(i,outind)] = handles.har();
+                                numUnderrun(i,outind) = handles.hap(handles.hsr1());
+                                if numUnderrun(i,outind) + numOverrun(i, outind) >0 && nattempt >0
+                                    ermessage = ['Error - Output channel: ', num2str(OutCh(outind)), '... Trying again in ', num2str(handles.addtime), 's']; 
+                                    waitbar(((outind-1)*ncycles+i)/(length(OutCh)*ncycles),h, ermessage)
+                                    pause(handles.addtime)
+                                    release(handles.hsr1)
+                                    reset(handles.hsr1)
+                                    audio(:,:,:,:,outind) = 0;
+                                    break
+                                end
+                                totalUnderrun = totalUnderrun + numUnderrun(i,outind);
+                                totalOverrun= totalOverrun+ numOverrun(i,outind);
+                            else
+                                break
+                            end
+                            waitbar(((outind-1)*ncycles+i)/(length(OutCh)*ncycles),h,'Recording in progress...')
+                        end
+                        if nattempt > 0 && numUnderrun(i,outind) + numOverrun(i, outind) >0
+                            for j = 1:nattempt
+                                ermessage = ['Attempting Output channel: ', num2str(OutCh(outind)), '... Attempt: ', num2str(j)]; 
+                                waitbar(((outind-1)*ncycles+i)/(length(OutCh)*ncycles),h, ermessage)
+                                for i = 1:ncycles
+                                    UserData = get(handles.stop_btn,'UserData');
+                                    if UserData.state == false
+                                        [audio((i-1)*handles.har.SamplesPerFrame+1:i*handles.har.SamplesPerFrame,:,1,1,outind),numOverrun(i,outind)] = handles.har();
+                                        numUnderrun(i,outind) = handles.hap(handles.hsr1());
+                                        if numUnderrun(i,outind) + numOverrun(i, outind) >0 && nattempt >0
+                                            ermessage = ['Error - Output channel: ', num2str(OutCh(outind)), '... Attempt: ', num2str(j), '... Trying again in ', num2str(handles.addtime), 's']; 
+                                            waitbar(((outind-1)*ncycles+i)/(length(OutCh)*ncycles),h, ermessage)
+                                            pause(handles.addtime)
+                                            release(handles.hsr1)
+                                            reset(handles.hsr1)
+                                            audio(:,:,:,:,outind) = 0;
+                                            break
+                                        end
+                                        totalUnderrun = totalUnderrun + numUnderrun(i,outind);
+                                        totalOverrun= totalOverrun+ numOverrun(i,outind);
+                                    else
+                                        break
+                                    end
+                                    waitbar(((outind-1)*ncycles+i)/(length(OutCh)*ncycles),h,'Recording in progress...')
+                                end
+                                if isDone(handles.hsr1) && numUnderrun(i,outind) + numOverrun(i, outind) == 0
+                                    handles.message{outind} = {'Error detected.'; 'Successful Routine.'; ['Outchan: ', num2str(OutCh(outind))]; ['re attempt #: ', num2str(j)]};
+                                    %disp(handles.message{outind})
+                                    break
+                                else
+                                    handles.message{outind} = {'Error detected.'; 'Unuccessful Routine.'; ['Outchan: ', num2str(OutCh(outind))]; ['re attempt #: ', num2str(j)] };
+                                    %disp(handles.message{outind})
+                                    if j == nattempt
+                                        totalUnderrun = totalUnderrun + numUnderrun(i,outind);
+                                        totalOverrun= totalOverrun+ numOverrun(i,outind);
+                                    end
+                                end
+                                release(handles.hsr1)
+                                reset(handles.hsr1)
+                            end
+                        end
+                        release(handles.hsr1)
+                        reset(handles.hsr1)
+                    end
+                case 1
+                    dummy = zeros(handles.hsr1.SamplesPerFrame, length(str2num(get(handles.IN_numchsout, 'String'))));
+                    setup(handles.hap,dummy);
+                    [~] = handles.har();
+                    handles.hap(dummy); 
+                    for i = 1:ncycles
+                        UserData = get(handles.stop_btn,'UserData');
+                        if UserData.state == false
+                            [audio((i-1)*handles.har.SamplesPerFrame+1:i*handles.har.SamplesPerFrame,:),numOverrun(i)] = handles.har();
+                            numUnderrun(i) = handles.hap(handles.hsr1());
+                            if numUnderrun(i) + numOverrun(i) >0 && nattempt >0
+                                ermessage = ['Error... Trying again in ', num2str(handles.addtime), 's']; 
+                                waitbar(((outind-1)*ncycles+i)/(length(OutCh)*ncycles),h, ermessage)
+                                pause(handles.addtime)
+                                release(handles.hsr1)
+                                reset(handles.hsr1)
+                                audio(:,:) = 0;
+                                break
+                            end
+                            totalUnderrun = totalUnderrun + numUnderrun(i);
+                            totalOverrun= totalOverrun + numOverrun(i);
+                        else
+                            break
+                        end
+                        waitbar(i/ncycles,h)
+                    end
+                    if nattempt > 0 && numUnderrun(i) + numOverrun(i) >0
+                        for j = 1:nattempt
+                            for i = 1:ncycles
+                                UserData = get(handles.stop_btn,'UserData');
+                                if UserData.state == false
+                                    [audio((i-1)*handles.har.SamplesPerFrame+1:i*handles.har.SamplesPerFrame,:),numOverrun(i)] = handles.har();
+                                    numUnderrun(i) = handles.hap(handles.hsr1());
+                                    if numUnderrun(i) + numOverrun(i) >0 && nattempt >0
+                                        ermessage = ['Error... Attempt: ', num2str(j), '... Trying again in ', num2str(handles.addtime), 's']; 
+                                        waitbar(((outind-1)*ncycles+i)/(length(OutCh)*ncycles),h, ermessage)
+                                        pause(handles.addtime)
+                                        release(handles.hsr1)
+                                        reset(handles.hsr1)
+                                        audio(:,:) = 0;
+                                        break
+                                    end
+                                    totalUnderrun = totalUnderrun + numUnderrun(i);
+                                    totalOverrun= totalOverrun+ numOverrun(i);
+                                else
+                                    break
+                                end
+                                waitbar(i/ncycles,h)
+                            end
+                            if isDone(handles.hsr1) && numUnderrun(i) + numOverrun(i) == 0
+                                handles.message{1} = {'Error detected.'; 'Successful Routine.'; 'Outchan:  Synchronous'; ['re attempt #: ', num2str(j)]};
+                                %disp(handles.message{1})
+                                release(handles.hsr1)
+                                reset(handles.hsr1)
+                                break
+                            else
+                                handles.message{1} = {'Error detected.'; 'Unuccessful Routine.'; 'Outchan:  Synchronous'; ['re attempt #: ', num2str(j)] };
+                                %disp(handles.message{1})
+                                if j == nattempt
+                                    totalUnderrun = totalUnderrun + numUnderrun(i);
+                                    totalOverrun= totalOverrun+ numOverrun(i);
+                                end
+                            end
+                            release(handles.hsr1)
+                            reset(handles.hsr1)
+                        end
+                    end
+            end
+        else
+            switch get(handles.sim_chk,'Value')
+                case 0
+                    dummy = zeros(handles.hsr1.SamplesPerFrame,1);
+                    for outind = 1:length(OutCh)
+                        release(handles.hap)
+                        handles.hap.ChannelMapping = OutCh(outind);
+                        setup(handles.hap,dummy);
+                        [~] = handles.har();
+                        handles.hap(dummy); 
+                        for i = 1:ncycles
+                            UserData = get(handles.stop_btn,'UserData');
+                            if UserData.state == false
+                                [audio((i-1)*handles.har.SamplesPerFrame+1:i*handles.har.SamplesPerFrame,:,1,1,outind),numOverrun(i,outind)] = handles.har();
+                                numUnderrun(i,outind) = handles.hap(handles.hsr1());
+                                totalUnderrun = totalUnderrun + numUnderrun(i,outind);
+                                totalOverrun= totalOverrun+ numOverrun(i,outind);
+                            else
+                                break
+                            end
+                            waitbar(((outind-1)*ncycles+i)/(length(OutCh)*ncycles),h)
+                        end
+                        release(handles.hsr1)
+                        reset(handles.hsr1)
+                    end
+                case 1
+                    dummy = zeros(handles.hsr1.SamplesPerFrame,str2num(get(handles.IN_numchsout, 'String')));
+                    setup(handles.hap,dummy);
+                    [~] = handles.har();
+                    handles.hap(dummy); 
+                    for i = 1:ncycles
+                        UserData = get(handles.stop_btn,'UserData');
+                        if UserData.state == false
+                            [audio((i-1)*handles.har.SamplesPerFrame+1:i*handles.har.SamplesPerFrame,:),numOverrun(i)] = handles.har();
+                            numUnderrun(i) = handles.hap(handles.hsr1());
+                            totalUnderrun = totalUnderrun + numUnderrun(i);
+                            totalOverrun= totalOverrun + numOverrun(i);
+                        else
+                            break
+                        end
+                        waitbar(i/ncycles,h)
+                    end
+            end
         end
+        
         if i == ncycles, delete(h); end
     catch sthgwrong
         UserData.state = true;
@@ -422,22 +699,42 @@ if get(handles.pb_enable,'Value') == 1
         warndlg(syswarning,'AARAE info')
     end
     pause off
-    % Check recording and adjust for QueueDuration latency
-    handles.rec = audio;
+    % Check recording and adjust for QueueDuration latency, account for
+    % buffer etc.
+    handles.rec = audio(length(handles.toremove)+1:end,:,:,:,:);
     if ~isempty(handles.rec)
-        handles.rec = handles.rec(handles.hap.QueueDuration*handles.fs:end,:);
+        %         handles.rec = handles.rec(handles.qdur*handles.fs:end,:);
         if UserData.state == false
-            if ~addtimeok
-                handles.rec = handles.rec(1:(size(handles.outputdata.audio,1)+handles.addtime*handles.fs),:);
-            else
-                handles.rec = handles.rec(1:size(playbackaudio,1),:);
-                handles.rec = reshape(handles.rec,(size(handles.outputdata.audio,1)+handles.addtime*handles.fs),length(handles.numchs),1,1,length(str2num(get(handles.IN_numchsout,'String'))));
-            end
+            %                 handles.rec = handles.rec(1:(size(handles.outputdata.audio,1)+handles.addtime*handles.fs),:);
         else
             UserData.state = false;
             set(handles.stop_btn,'UserData',UserData);
         end
-    % Plot recording
+        % check errors
+        if get(handles.test, 'Value') == 1 && totalUnderrun || totalOverrun >0
+            warndlg('Record/playback error: Try again or load signal and see error field');
+            handles.Underrun = numUnderrun;
+            handles.Overrun = numOverrun;
+            handles.error = 1;
+            % % % % %             f = figure('Name','Reverberation Parameters', ...
+            % % % % %                 'Position',[200 200 620 360]);
+            % % % % %             inderror = 1:ncycles;
+            % % % % %             daterror = [numOverrun,numUnderrun];
+            % % % % %
+            % % % % %             for c = 1:length(OutCh)
+            % % % % %                 cnames{:,2*c-1} = ['Overrun Out Channel: ',num2str(OutCh(c))];
+            % % % % %                 cnames{:,2*c} = ['Underrun Out Channel: ',num2str(OutCh(c))];
+            % % % % %             end
+            % % % % %
+            % % % % %             rnames = num2str(inderror);
+            % % % % %             t2 =uitable('Data',daterror,'ColumnName',cnames, 'RowName', rnames);
+            % % % % %             set(t2,'ColumnWidth',{90});
+            % % % % %             [~,tables] = disptables(f,[t2],{'Error'});
+        else
+            handles.error = 0;
+        end
+        
+        % Plot recording
         time = linspace(0,size(handles.rec,1)/handles.fs,length(handles.rec));
         pixels = get_axes_width(handles.IN_axes);
         [t, linea] = reduce_to_width(time', handles.rec, pixels, [-inf inf]);
@@ -458,14 +755,28 @@ else
     % Set record object
     inputs = cellstr(get(handles.inputdev_popup,'String'));
     inputdevname = inputs{get(handles.inputdev_popup,'Value')};
-    handles.har = dsp.AudioRecorder('DeviceName',inputdevname,...
-        'SampleRate',handles.fs,...
-        'OutputDataType','double',...
-        'ChannelMappingSource','Property',...
-        'ChannelMapping',handles.numchs,...
-        'BufferSizeSource','Property',...
-        'BufferSize',handles.buffer,...
-        'QueueDuration',handles.qdur);
+    switch handles.ASIO
+        case 0
+            handles.har = audioDeviceReader(...
+                'Device',inputdevname,...
+                'SampleRate',handles.fs,...
+                'BitDepth', '24-bit integer',...
+                'OutputDataType','double',...
+                'ChannelMappingSource','Property',...
+                'ChannelMapping',handles.numchs,...
+                'SamplesPerFrame',handles.buffer);
+        case 1
+            handles.har = audioDeviceReader(...
+                'Driver', 'ASIO',...
+                'Device',inputdevname,...
+                'SampleRate',handles.fs,...
+                'BitDepth', '24-bit integer',...
+                'OutputDataType','double',...
+                'ChannelMappingSource','Property',...
+                'ChannelMapping',handles.numchs,...
+                'SamplesPerFrame',handles.buffer);
+    end
+    %     setup(handles.har)
     guidata(hObject,handles)
     ncycles = ceil(dur/handles.har.SamplesPerFrame);
     handles.rec = [];
@@ -475,19 +786,35 @@ else
     % Initialize record routine
     pause on
     try
+        
         UserData = get(handles.stop_btn,'UserData');
         h = waitbar(0,'Recording in progress...','Name','AARAE info');
         handles.recordtime = datestr(now);
-        for i = 1:ncycles
-           UserData = get(handles.stop_btn,'UserData');
-           if UserData.state == false
-               audio((i-1)*handles.har.SamplesPerFrame+1:i*handles.har.SamplesPerFrame,:) = step(handles.har);
-           else
-               break
-           end
-           waitbar(i/ncycles,h)
-           pause(0.0000001)
+        numOverrun=[];
+        totalOverrun=0;
+        if get(handles.test, 'Value') == 1
+            for i = 1:ncycles
+                UserData = get(handles.stop_btn,'UserData');
+                if UserData.state == false
+                    [audio((i-1)*handles.har.SamplesPerFrame+1:i*handles.har.SamplesPerFrame,:),numOverrun(i)] = handles.har();
+                    totalOverrun = totalOverrun + numOverrun(i);
+                else
+                    break
+                end
+                waitbar(i/ncycles,h)
+            end
+        else
+            for i = 1:ncycles
+                UserData = get(handles.stop_btn,'UserData');
+                if UserData.state == false
+                    audio((i-1)*handles.har.SamplesPerFrame+1:i*handles.har.SamplesPerFrame,:) = handles.har();
+                else
+                    break
+                end
+                waitbar(i/ncycles,h)
+            end
         end
+        
         if i == ncycles, delete(h); end
     catch sthgwrong
         UserData.state = true;
@@ -504,6 +831,29 @@ else
         else
             UserData.state = false;
             set(handles.stop_btn,'UserData',UserData);
+        end
+        % check errors
+        if get(handles.test, 'Value') == 1 && totalOverrun >0
+            warndlg('Record/playback error: Try again or load signal and see error field');
+            handles.Underrun = [];
+            handles.Overrun = numOverrun;
+            handles.error = 1;
+            % % % % %             f = figure('Name','Reverberation Parameters', ...
+            % % % % %                 'Position',[200 200 620 360]);
+            % % % % %             inderror = 1:ncycles;
+            % % % % %             daterror = [numOverrun,numUnderrun];
+            % % % % %
+            % % % % %             for c = 1:length(OutCh)
+            % % % % %                 cnames{:,2*c-1} = ['Overrun Out Channel: ',num2str(OutCh(c))];
+            % % % % %                 cnames{:,2*c} = ['Underrun Out Channel: ',num2str(OutCh(c))];
+            % % % % %             end
+            % % % % %
+            % % % % %             rnames = num2str(inderror);
+            % % % % %             t2 =uitable('Data',daterror,'ColumnName',cnames, 'RowName', rnames);
+            % % % % %             set(t2,'ColumnWidth',{90});
+            % % % % %             [~,tables] = disptables(f,[t2],{'Error'});
+        else
+            handles.error = 0;
         end
         % Plot recording
         time = linspace(0,size(handles.rec,1)/handles.fs,length(handles.rec));
@@ -533,8 +883,8 @@ if get(handles.SilenceRequestCheckBox,'Value') == 1
     outputs = cellstr(get(handles.outputdev_popup,'String'));
     outputdevname = outputs{get(handles.outputdev_popup,'Value')};
     
-        % Set playback audio
-    handles.hsr1 = dsp.SignalSource;
+    % Set playback audio
+    handles.hsr1 = dsp.SignalSource('SamplesPerFrame', handles.buffer);
     if handles.thankyou.fs ~= fs
         gcd_fs = gcd(handles.thankyou.fs,fs); % greatest common denominator
         thankyou = resample(handles.thankyou.audio,fs/gcd_fs,handles.thankyou.fs/gcd_fs);
@@ -543,41 +893,72 @@ if get(handles.SilenceRequestCheckBox,'Value') == 1
     end
     thankyou = thankyou(:,1,1,1,1,1); % make sure it is 1 channel (it should be anyway)
     if length(str2num(get(handles.IN_numchsout,'String'))) > 1
-            thankyou = repmat(thankyou,1,length(str2num(get(handles.IN_numchsout,'String'))));
+        thankyou = repmat(thankyou,1,length(str2num(get(handles.IN_numchsout,'String'))));
     end
-    handles.hap = dsp.AudioPlayer('DeviceName',outputdevname,...
-        'SampleRate',fs,...
-        'QueueDuration',handles.qdur,...
-        'BufferSizeSource','Property',...
-        'BufferSize',handles.buffer);
+    
     
     %if get(handles.invfilter_chk,'Value') == 1, quietplease = filter(handles.syscalstats.audio2,1,quietplease); end
-    handles.hsr1.Signal = [thankyou;zeros(floor(handles.hap.QueueDuration*handles.fs),1)];
-    handles.hsr1.SamplesPerFrame = 2048;
+    handles.hsr1.Signal = [thankyou];
+    handles.hsr1.SamplesPerFrame = handles.buffer;
+    %     setup(handles.hsr1);
+    
+    switch handles.ASIO
+        case 0
+            handles.hap = audioDeviceWriter(...
+                'BitDepth', '24-bit integer',...
+                'SampleRate',fs,...
+                'BufferSize', handles.buffer,...
+                'SupportVariableSizeInput', 0,...
+                'ChannelMappingSource', 'Property',...
+                'ChannelMapping', str2num(get(handles.IN_numchsout, 'String')),...
+                'Device', outputdevname);
+        case 1
+            % consider adding a check that the asio buffer is the same as
+            % the user buffer.
+            handles.hap = audioDeviceWriter(...
+                'Driver', 'ASIO',...
+                'BitDepth', '24-bit integer',...
+                'SampleRate',fs,...
+                'BufferSize', handles.buffer,...
+                'SupportVariableSizeInput', 0,...
+                'ChannelMappingSource', 'Property',...
+                'ChannelMapping', str2num(get(handles.IN_numchsout, 'String')),...
+                'Device', outputdevname);
+    end
+    %     setup(handles.hap,...
+    %         zeros(handles.hsr1.SamplesPerFrame,...
+    %         length(str2num(get(handles.IN_numchsout, 'String')))));
+    
     guidata(hObject,handles)
     ncycles = ceil(length(handles.hsr1.Signal)/handles.hsr1.SamplesPerFrame);
     set(hObject,'BackgroundColor','red');
     set(handles.stop_btn,'Visible','on');
     % Initialize playback routine
     pause on
-        h = helpdlg('Thankyou!','AARAE info');
-        for i = 1:ncycles
-           UserData = get(handles.stop_btn,'UserData');
-           if UserData.state == false
-               step(handles.hap,step(handles.hsr1));
-           else
-               break
-           end
-           pause(0.0000001)
+    h = helpdlg('Thankyou!','AARAE info');
+    for i = 1:ncycles
+        UserData = get(handles.stop_btn,'UserData');
+        if UserData.state == false
+            handles.hap(handles.hsr1());
+        else
+            break
         end
-        if i == ncycles, delete(h); end
+    end
+    if i == ncycles, delete(h); end
+    pause(length(handles.hsr1.Signal)/fs)
     pause off
     % Release playback and audio data objects
     release(handles.hap)
     release(handles.hsr1)
 end
 
-
+try
+    delete(handles.hsr1)
+    delete(handles.hap)
+    delete(handles.har)
+catch
+    delete(handles.har)
+end
 
 
 set(handles.record_btn,'BackgroundColor',[0.94 0.94 0.94]);
@@ -613,9 +994,14 @@ else
     pause(0.000001)
     pause off
     hMain = getappdata(0,'hMain');
-    if get(handles.delay_chk,'Value') == 1, handles.rec = [handles.rec(handles.syscalstats.latency:end,:);zeros(handles.syscalstats.latency,size(handles.rec,2))]; end
+    if get(handles.delay_chk,'Value') == 1 && isempty(handles.toremove), handles.rec = [handles.rec(handles.syscalstats.latency:end,:);zeros(handles.syscalstats.latency,size(handles.rec,2))]; end
     if get(handles.invfilter_chk,'Value') == 1, handles.rec = filter(handles.syscalstats.audio2,1,handles.rec); end
     handles.recording.audio = handles.rec;
+    
+    if get(handles.test, 'Value') == 1 && handles.error == 1
+        handles.recording.error.Underrun = handles.Underrun;
+        handles.recording.error.Overrun = handles.Overrun;
+    else end
     if get(handles.pb_enable,'Value') && isfield(handles.outputdata,'audio2')
         handles.recording.audio2 = handles.outputdata.audio2;
     elseif get(handles.pb_enable,'Value') && ~isfield(handles.outputdata,'audio2')
@@ -626,18 +1012,30 @@ else
     handles.recording.fs = handles.fs;
     %handles.recording.nbits = handles.nbits;
     try
-        handles.recording.chanID = cellstr([repmat('Chan',size(handles.recording.audio,2),1) num2str((handles.numchs)')]);
-    
+        handles.recording.chanID = cellstr([repmat('InChan',size(handles.recording.audio,2),1) num2str((handles.numchs)')]);
+        
     catch
-        handles.recording.chanID = cellstr([repmat('Chan',size(handles.recording.audio,2),1) num2str((1:size(handles.recording.audio,2))')]);    
+        handles.recording.chanID = cellstr([repmat('InChan',size(handles.recording.audio,2),1) num2str((1:size(handles.recording.audio,2))')]);
     end
     % Potentially add dim5ID or outchanID here (once its name is defined).
     % should it be a property or a first order field?
+    % ***** outchanID in dim5 added
+    if get(handles.sim_chk,'Value') == 0
+        OutCh = str2num(get(handles.IN_numchsout,'String'));
+        try
+            handles.recording.OutchanID = cellstr([repmat('OutChan',size(handles.recording.audio,5),1) num2str((OutCh)')]);
+            
+        catch
+            handles.recording.OutchanID = cellstr([repmat('OutChan',size(handles.recording.audio,5),1) num2str((1:size(handles.recording.audio,5))')]);
+        end
+    end
     if get(handles.cal_chk,'Value') == 1
         handles.recording.cal = handles.syscalstats.cal(1:size(handles.recording.audio,2));
-        handles.recording.properties.units = handles.syscalstats.units;
-        handles.recording.properties.units_ref = handles.syscalstats.units_ref;
-        handles.recording.properties.units_type = handles.syscalstats.units_type;
+        if isfield(handles.syscalstats, 'units')
+            handles.recording.properties.units = handles.syscalstats.units;
+            handles.recording.properties.units_ref = handles.syscalstats.units_ref;
+            handles.recording.properties.units_type = handles.syscalstats.units_type;
+        end
     end
     handles.recording.history = cell(2,4);
     if isfield(handles,'outputdata')
@@ -678,7 +1076,6 @@ else
         'duration', handles.dur;...
         'input device', inputdevname;...
         'input channels', handles.numchs;...
-        'queue duration', handles.qdur;...
         'buffer length', handles.buffer;...
         'output device', outputdevname;...
         'output channels', outchans;...
@@ -718,7 +1115,7 @@ function IN_numchs_Callback(hObject, ~, handles) %#ok number of channels input
 %        str2double(get(hObject,'String')) returns contents of IN_numchs as a double
 
 % allow multiple numbers to be entered for channel mapping
-numchs = str2num(get(handles.IN_numchs, 'string')); 
+numchs = str2num(get(handles.IN_numchs, 'string'));
 hMain = getappdata(0,'hMain');
 % Check user's input
 numchs = numchs(~isnan(numchs));
@@ -757,8 +1154,13 @@ function IN_duration_Callback(hObject, ~, handles) %#ok : duration input box
 %        str2double(get(hObject,'String')) returns contents of IN_duration as a double
 
 % Get duration input
-dur = round(str2double(get(handles.IN_duration, 'string')));
-hMain = getappdata(0,'hMain');
+if get(handles.pb_enable,'Value') == 1
+    dur = str2double(get(handles.IN_duration, 'string'));
+    hMain = getappdata(0,'hMain');
+else
+    dur = round(str2double(get(handles.IN_duration, 'string')));
+    hMain = getappdata(0,'hMain');
+end
 % Check user's input
 if (isnan(dur)||dur<=0)
     if get(handles.pb_enable,'Value') == 1
@@ -773,11 +1175,13 @@ else
     handles.dur = dur;
     handles.addtime = dur;
     if get(handles.pb_enable,'Value') == 1
-        xlim(handles.IN_axes,[0 round(handles.dur+handles.addtime)])
-        xlim(handles.OUT_axes,[0 round(handles.dur+handles.addtime)])
+        xlim(handles.IN_axes,[0 length(handles.outputdata.audio)/...
+            handles.outputdata.fs + handles.addtime])
+        xlim(handles.OUT_axes,[0 length(handles.outputdata.audio)/...
+            handles.outputdata.fs + handles.addtime])
     else
-        xlim(handles.IN_axes,[0 round(handles.dur)])
-        xlim(handles.OUT_axes,[0 round(handles.dur)])
+        xlim(handles.IN_axes,[0 handles.dur])
+        xlim(handles.OUT_axes,[0 handles.dur])
     end
 end
 guidata(hObject, handles);
@@ -909,7 +1313,7 @@ if get(hObject,'Value') == 1
     if isfield(handles.syscalstats,'latency'), set(handles.delay_chk,'Enable','on','Value',1); end
     if isfield(handles.syscalstats,'audio'), set(handles.invfilter_chk,'Enable','on','Value',1); end
     set(handles.output_panel,'Visible','on');
-    set(handles.IN_numchsout,'String','1')
+    %     set(handles.IN_numchsout,'String','1')
     if size(handles.outputdata.audio,2) == 1
         set([handles.text25,handles.IN_numchsout,handles.sim_chk],'Visible','on')
     else
@@ -919,13 +1323,14 @@ if get(hObject,'Value') == 1
     selectednode = mainHandles.mytree.getSelectedNodes;
     set(handles.IN_name,'String',['rec_' selectednode(1).getName.char])
     set(handles.IN_numchs,'String',num2str(getappdata(hMain,'audio_recorder_numchs')));
+    set(handles.IN_numchsout,'String',num2str(getappdata(hMain,'audio_recorder_numchsout')));
     set(handles.text1,'String','Add time');
     set(handles.IN_duration,'String',num2str(getappdata(hMain,'audio_recorder_duration')));
     set(handles.IN_fs,'Enable','off');
     set(handles.IN_fs,'String','-');
     %set(handles.IN_nbits,'Enable','off');
     %set(handles.IN_nbits,'String','-');
-    set(handles.IN_qdur,'String',num2str(getappdata(hMain,'audio_recorder_qdur')));
+    set(handles.recorder_instructions,'String','Instructions');
     set(handles.IN_buffer,'String',num2str(getappdata(hMain,'audio_recorder_buffer')));
     set(handles.audio_recorder,'Position',handles.position);
     set(handles.OUT_axes,'Visible','on');
@@ -935,8 +1340,8 @@ if get(hObject,'Value') == 1
     handles.addtime = str2double(get(handles.IN_duration,'String'));
     handles.fs = handles.outputdata.fs;
     %handles.nbits = handles.outputdata.nbits;
-    xlim(handles.IN_axes,[0 round(handles.dur+handles.addtime)])
-    xlim(handles.OUT_axes,[0 round(handles.dur+handles.addtime)])
+    xlim(handles.IN_axes,[0 handles.dur+handles.addtime])
+    xlim(handles.OUT_axes,[0 handles.dur+handles.addtime])
 else
     if isfield(handles.syscalstats,'latency'), set(handles.delay_chk,'Enable','off','Value',0); end
     if isfield(handles.syscalstats,'audio'), set(handles.invfilter_chk,'Enable','off','Value',0); end
@@ -948,7 +1353,7 @@ else
     set(handles.IN_fs,'String',num2str(getappdata(hMain,'audio_recorder_fs')));
     %set(handles.IN_nbits,'Enable','on');
     %set(handles.IN_nbits,'String',num2str(getappdata(hMain,'audio_recorder_nbits')));
-    set(handles.IN_qdur,'String',num2str(getappdata(hMain,'audio_recorder_qdur')));
+    set(handles.recorder_instructions,'String','Instructions');
     set(handles.IN_buffer,'String',num2str(getappdata(hMain,'audio_recorder_buffer')));
     set(handles.audio_recorder,'Position',handles.position-[0 0 0 handles.OUT_axes_position(4)]);
     set(handles.OUT_axes,'Visible','off');
@@ -958,8 +1363,8 @@ else
     handles.dur = str2double(get(handles.IN_duration,'String'));
     handles.fs = str2double(get(handles.IN_fs,'String'));
     %handles.nbits = str2double(get(handles.IN_nbits,'String'));
-    xlim(handles.IN_axes,[0 round(handles.dur)])
-    xlim(handles.OUT_axes,[0 round(handles.dur)])
+    xlim(handles.IN_axes,[0 handles.dur])
+    xlim(handles.OUT_axes,[0 handles.dur])
 end
 guidata(hObject,handles);
 
@@ -994,14 +1399,14 @@ if isfield(syscalstats,'fs'), handles.syscalstats(1).fs = syscalstats.fs; end
 if isfield(syscalstats,'latency') && ~isnan(syscalstats.latency)
     if isfield(handles.syscalstats,'latency')
         if handles.syscalstats.latency ~= syscalstats.latency
-             replace_value = questdlg(['The system latency measurement has changed from ' num2str(handles.syscalstats.latency) ' samples to ' num2str(syscalstats.latency) ' samples. Would you like to replace this value?'],...
-                                       'AARAE info',...
-                                       'Yes', 'No', 'No');
-             switch replace_value
-                 case 'Yes'
-                     handles.savenewsyscal = 1;
-                     handles.syscalstats.latency = syscalstats.latency;
-             end
+            replace_value = questdlg(['The system latency measurement has changed from ' num2str(handles.syscalstats.latency) ' samples to ' num2str(syscalstats.latency) ' samples. Would you like to replace this value?'],...
+                'AARAE info',...
+                'Yes', 'No', 'No');
+            switch replace_value
+                case 'Yes'
+                    handles.savenewsyscal = 1;
+                    handles.syscalstats.latency = syscalstats.latency;
+            end
         end
     else
         handles.savenewsyscal = 1;
@@ -1013,48 +1418,48 @@ end
 if isfield(syscalstats,'cal')% && ~isnan(syscalstats.cal)
     if isfield(handles.syscalstats,'cal')
         if handles.syscalstats.cal ~= syscalstats.cal
-             replace_value = questdlg(['The gain calibration measurement has changed from ' num2str(handles.syscalstats.cal) ' dB to ' num2str(syscalstats.cal) ' dB. Would you like to replace this value?'],...
-                                       'AARAE info',...
-                                       'Yes', 'No', 'No');
-             switch replace_value
-                 case 'Yes'
-                     handles.savenewsyscal = 1;
-                     handles.syscalstats.cal = syscalstats.cal;
-                     if isfield(syscalstats,'units')
-                         handles.syscalstats.units = syscalstats.units;
-                     else
-                         handles.syscalstats.units = 'Val';
-                     end
-                     if isfield(syscalstats,'units_ref')
-                         handles.syscalstats.units_ref = syscalstats.units_ref;
-                     else
-                         handles.syscalstats.units_ref = 1;
-                     end
-                     if isfield(syscalstats,'units')
-                         handles.syscalstats.units_type = syscalstats.units_type;
-                     else
-                         handles.syscalstats.units_type = 1;
-                     end
-             end
+            replace_value = questdlg(['The gain calibration measurement has changed from ' num2str(handles.syscalstats.cal) ' dB to ' num2str(syscalstats.cal) ' dB. Would you like to replace this value?'],...
+                'AARAE info',...
+                'Yes', 'No', 'No');
+            switch replace_value
+                case 'Yes'
+                    handles.savenewsyscal = 1;
+                    handles.syscalstats.cal = syscalstats.cal;
+                    if isfield(syscalstats,'units')
+                        handles.syscalstats.units = syscalstats.units;
+                    else
+                        handles.syscalstats.units = 'Val';
+                    end
+                    if isfield(syscalstats,'units_ref')
+                        handles.syscalstats.units_ref = syscalstats.units_ref;
+                    else
+                        handles.syscalstats.units_ref = 1;
+                    end
+                    if isfield(syscalstats,'units')
+                        handles.syscalstats.units_type = syscalstats.units_type;
+                    else
+                        handles.syscalstats.units_type = 1;
+                    end
+            end
         end
     else
         handles.savenewsyscal = 1;
         handles.syscalstats(1).cal = syscalstats.cal;
         if isfield(syscalstats,'units')
-                         handles.syscalstats.units = syscalstats.units;
-                     else
-                         handles.syscalstats.units = 'Val';
-                     end
-                     if isfield(syscalstats,'units_ref')
-                         handles.syscalstats.units_ref = syscalstats.units_ref;
-                     else
-                         handles.syscalstats.units_ref = 1;
-                     end
-                     if isfield(syscalstats,'units')
-                         handles.syscalstats.units_type = syscalstats.units_type;
-                     else
-                         handles.syscalstats.units_type = 1;
-                     end
+            handles.syscalstats.units = syscalstats.units;
+        else
+            handles.syscalstats.units = 'Val';
+        end
+        if isfield(syscalstats,'units_ref')
+            handles.syscalstats.units_ref = syscalstats.units_ref;
+        else
+            handles.syscalstats.units_ref = 1;
+        end
+        if isfield(syscalstats,'units')
+            handles.syscalstats.units_type = syscalstats.units_type;
+        else
+            handles.syscalstats.units_type = 1;
+        end
     end
     set(handles.cal_chk,'Enable','on','Value',1)
     set(handles.caltext,'String',[num2str(handles.syscalstats.cal) ' dB'])
@@ -1062,14 +1467,14 @@ end
 if isfield(syscalstats,'invfilter') && ~isempty(syscalstats.invfilter)
     if isfield(handles.syscalstats,'invfilter')
         if handles.syscalstats.invfilter ~= syscalstats.invfilter
-             replace_value = questdlg('The inverse filter has been modified. Would you like to replace it?',...
-                                       'AARAE info',...
-                                       'Yes', 'No', 'No');
-             switch replace_value
-                 case 'Yes'
-                     handles.savenewsyscal = 1;
-                     handles.syscalstats.audio = syscalstats.invfilter;
-             end
+            replace_value = questdlg('The inverse filter has been modified. Would you like to replace it?',...
+                'AARAE info',...
+                'Yes', 'No', 'No');
+            switch replace_value
+                case 'Yes'
+                    handles.savenewsyscal = 1;
+                    handles.syscalstats.audio = syscalstats.invfilter;
+            end
         end
     else
         handles.savenewsyscal = 1;
@@ -1124,7 +1529,7 @@ if isempty(handles.rec)
     warndlg('No signal recorded!');
     setappdata(hMain,'testsignal',[]);
 else
-%    hMain = getappdata(0,'hMain');
+    %    hMain = getappdata(0,'hMain');
     if get(handles.delay_chk,'Value') == 1, handles.rec = [handles.rec(handles.syscalstats.latency:end,:);zeros(handles.syscalstats.latency-1,size(handles.rec,2))]; end
     if get(handles.invfilter_chk,'Value') == 1, handles.rec = filter(handles.syscalstats.audio2,1,handles.rec); end
     time1 = linspace(0,size(handles.rec,1)/handles.fs,length(handles.rec));
@@ -1136,37 +1541,33 @@ end
 
 
 
-function IN_qdur_Callback(hObject, ~, handles) %#ok : queue duration input box
-% hObject    handle to IN_qdur (see GCBO)
+function recorder_instructions_Callback(hObject, ~, handles) %#ok : queue duration input box
+% hObject    handle to recorder_instructions (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of IN_qdur as text
-%        str2double(get(hObject,'String')) returns contents of IN_qdur as a double
-hMain = getappdata(0,'hMain');
-% Get bit depth input
-qdur = str2double(get(hObject, 'string'));
-% Check user's input
-if (isnan(qdur) || qdur<=0)
-    set(hObject,'String',num2str(handles.qdur))
-    warndlg('All inputs MUST be real positive numbers!');
-else
-    handles.qdur = qdur;
-    setappdata(hMain,'audio_recorder_qdur',qdur)
-end
-guidata(hObject, handles);
+% Hints: get(hObject,'String') returns contents of recorder_instructions as text
+%        str2double(get(hObject,'String')) returns contents of recorder_instructions as a double
+message{1} = 'Instructions:';
+message{2} = '1. Select Audio Device from drop down menu. (Note: stabilty is not guarenteed when using Windows directsound drivers or built in in/out on Mac OS)';
+message{3} = '2. When using ASIO devices on windows machines, you must manually set the buffersize on the device control software as well as the text box in audio recorder';
+message{4} = '3. You can test for sample drops by running the routine with error check box ticked. "Attempts" is the number of times to retry along output channels. If an error is detected during recording and attempts >0, the play/record routine is aborted and a second attempt is run. An error dialogue box is shown if there are errors remaining.';
+message{5} = '4. Select Audio Device and set device settings in audio recorder BEFORE calibration';
+message{6} = '5. If Delay Comp is ticked when recording, latency is removed and the compensated audio is plotted. If Delay Comp is ticked after recording, latency is removed when "Load Recording" is pressed. Latency is only removed once';
+
+helpdlg(message,'AARAE info')
 
 % --- Executes during object creation, after setting all properties.
-function IN_qdur_CreateFcn(hObject, ~, ~) %#ok : queue dueration input box creation
-% hObject    handle to IN_qdur (see GCBO)
+function recorder_instructions_CreateFcn(hObject, ~, ~) %#ok : queue dueration input box creation
+% hObject    handle to recorder_instructions (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
+% if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+% %     set(hObject,'BackgroundColor','white');
+
 
 
 
@@ -1207,6 +1608,7 @@ function IN_buffer_CreateFcn(hObject, ~, ~) %#ok : buffer size input box creatio
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
 
 
 % --- Executes on selection change in inputdev_popup.
@@ -1259,13 +1661,29 @@ end
 
 
 
-function IN_numchsout_Callback(~, ~, ~) %#ok : Executed when number of output channels changes
+function IN_numchsout_Callback(hObject, ~, handles) %#ok : Executed when number of output channels changes
 % hObject    handle to IN_numchsout (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hints: get(hObject,'String') returns contents of IN_numchsout as text
 %        str2double(get(hObject,'String')) returns contents of IN_numchsout as a double
+hMain = getappdata(0,'hMain');
+numchsout = str2num(get(handles.IN_numchsout, 'String'));
+hMain = getappdata(0,'hMain');
+% Check user's input
+numchsout = numchsout(~isnan(numchsout));
+numchsout = numchsout(numchsout>0);
+numchsout = round(numchsout);
+numchsout = unique(numchsout);
+if isempty(numchsout)
+    set(hObject,'String',num2str(handles.numchsout));
+    warndlg('All inputs MUST be real positive numbers!');
+else
+    handles.numchsout = numchsout;
+    setappdata(hMain,'audio_recorder_numchsout',numchsout)
+end
+guidata(hObject, handles);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -1300,7 +1718,7 @@ function SilenceRequestCheckBox_Callback(hObject, ~, ~)
 hMain = getappdata(0,'hMain');
 setappdata(hMain,'audio_recorder_silencerequest',get(hObject,'Value'));
 
-    
+
 
 
 % --- Executes during object creation, after setting all properties.
@@ -1320,9 +1738,9 @@ function Playback_delay_Callback(hObject, ~, handles)
 %        str2double(get(hObject,'String')) returns contents of Playback_delay as a double
 hMain = getappdata(0,'hMain');
 playbackdelay = str2double(get(hObject,'String'));
-if (isnan(playbackdelay) || playbackdelay<=0)
+if (isnan(playbackdelay) || playbackdelay<0)
     set(hObject,'String',num2str(handles.playbackdelay))
-    warndlg('All inputs MUST be real positive numbers!');
+    warndlg('All inputs MUST be real numbers >=0!');
 else
     handles.playbackdelay = playbackdelay;
     setappdata(hMain,'playbackdelay',playbackdelay)
@@ -1375,3 +1793,66 @@ else
 end
 
 guidata(hObject,handles)
+
+
+% --- Executes on button press in test.
+function test_Callback(hObject, ~, handles)
+% hObject    handle to test (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+handles.test = get(hObject,'Value');
+% Hint: get(hObject,'Value') returns toggle state of test
+
+
+% % % % % % % % % % --- Executes on button press in recorder_instructions.
+% % % % % % % % % function recorder_instructions_Callback(hObject, eventdata, handles)
+% % % % % % % % % % hObject    handle to recorder_instructions (see GCBO)
+% % % % % % % % % % eventdata  reserved - to be defined in a future version of MATLAB
+% % % % % % % % % % handles    structure with handles and user data (see GUIDATA)
+% % % % % % % % %
+% % % % % % % % %
+% % % % % % % % % % --- Executes during object creation, after setting all properties.
+% % % % % % % % % function recorder_instructions_CreateFcn(hObject, eventdata, handles)
+% % % % % % % % % % hObject    handle to recorder_instructions (see GCBO)
+% % % % % % % % % % eventdata  reserved - to be defined in a future version of MATLAB
+% % % % % % % % % % handles    empty - handles not created until after all CreateFcns called
+
+
+
+function nattempt_Callback(hObject, ~, handles)
+% hObject    handle to nattempt (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of nattempt as text
+%        str2double(get(hObject,'String')) returns contents of nattempt as a double
+hMain = getappdata(0,'hMain');
+nattempt = round(str2double(get(hObject,'String')));
+if (isnan(nattempt) || nattempt<0)
+    set(hObject,'String',num2str(handles.nattempt))
+    warndlg('All inputs MUST be real numbers >=0!');
+else
+    set(hObject,'String', nattempt)
+    setappdata(hMain,'nattempt', handles.nattempt)
+end
+guidata(hObject, handles);
+
+% --- Executes during object creation, after setting all properties.
+function nattempt_CreateFcn(hObject, ~ , handles)
+% hObject    handle to nattempt (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+hMain = getappdata(0,'hMain');
+try
+    handles.nattempt = getappdata(hMain,'nattempt',nattempt)
+    set(hObject, 'String', handles.nattempt)
+catch
+    handles.nattempt = '1';
+    set(hObject, 'String', handles.nattempt)
+end

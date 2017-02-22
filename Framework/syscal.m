@@ -81,12 +81,52 @@ else
     if get(handles.mainHandles.pb_enable,'Value') == 0, set(handles.evaldelay_btn,'Enable','off'); end
     outputs = cellstr(get(handles.mainHandles.outputdev_popup,'String'));
     outputdevname = outputs{get(handles.mainHandles.outputdev_popup,'Value')};
-    handles.hap = dsp.AudioPlayer('DeviceName',outputdevname,'SampleRate',handles.mainHandles.fs,'QueueDuration',handles.mainHandles.qdur,'BufferSizeSource','Property','BufferSize',handles.mainHandles.buffer);
+     switch handles.mainHandles.ASIO
+        case 0
+            handles.hap = audioDeviceWriter(...
+                'BitDepth', '24-bit integer',...
+                'SampleRate',handles.mainHandles.fs,...
+                'BufferSize', handles.mainHandles.buffer,...
+                'SupportVariableSizeInput', 0,...
+                'ChannelMappingSource', 'Property',...
+                'ChannelMapping', 1,...
+                'Device', outputdevname);
+        case 1
+            handles.hap = audioDeviceWriter(...
+                'Driver', 'ASIO',...
+                'BitDepth', '24-bit integer',...
+                'SampleRate',handles.mainHandles.fs,...
+                'BufferSize', handles.mainHandles.buffer,...
+                'SupportVariableSizeInput', 0,...
+                'ChannelMappingSource', 'Property',...
+                'ChannelMapping', 1,...
+                'Device', outputdevname);
+    end
     inputs = cellstr(get(handles.mainHandles.inputdev_popup,'String'));
     inputdevname = inputs{get(handles.mainHandles.inputdev_popup,'Value')};
-    handles.har = dsp.AudioRecorder('DeviceName',inputdevname,'SampleRate',handles.mainHandles.fs,'QueueDuration',handles.mainHandles.qdur,'OutputDataType','double','NumChannels',1,'BufferSizeSource','Property','BufferSize',handles.mainHandles.buffer);
+        switch handles.mainHandles.ASIO
+        case 0
+            handles.har = audioDeviceReader(...
+                'Device',inputdevname,...
+                'SampleRate',handles.mainHandles.fs,...
+                'BitDepth', '24-bit integer',...
+                'OutputDataType','double',...
+                'ChannelMappingSource','Property',...
+                'ChannelMapping',1,...
+                'SamplesPerFrame',handles.mainHandles.buffer);
+        case 1
+            handles.har = audioDeviceReader(...
+                'Driver', 'ASIO',...
+                'Device',inputdevname,...
+                'SampleRate',handles.mainHandles.fs,...
+                'BitDepth', '24-bit integer',...
+                'OutputDataType','double',...
+                'ChannelMappingSource','Property',...
+                'ChannelMapping',1,...
+                'SamplesPerFrame',handles.mainHandles.buffer);
+    end
     handles.hsr1 = dsp.SignalSource;
-    handles.hsr1.SamplesPerFrame = 1024;
+    handles.hsr1.SamplesPerFrame = handles.mainHandles.buffer;
     set(handles.duration_IN,'String','10')
     set(handles.sperframe_IN,'String',num2str(handles.mainHandles.fs*0.1))
     set(handles.percentage_IN,'String','40')
@@ -102,12 +142,14 @@ else
     handles.output = struct;
     xlabel(handles.IRaxes,'Time [s]')
     ylim(handles.IRaxes,[-60 10])
-    deviceinfo = dspAudioDeviceInfo('inputs');
+    harinfo = info(handles.har);
+%     deviceinfo = handles.har('inputs');
+    maxchans = harinfo.MaximumInputChannels;
     set(handles.devnametext,'String',inputdevname)
     inputsel = get(handles.mainHandles.inputdev_popup,'Value');
-    channels = cellstr([repmat('IN - Channel',deviceinfo(inputsel).maxInputs,1) num2str((1:deviceinfo(inputsel).maxInputs).')]);
+    channels = cellstr([repmat('IN - Channel',maxchans,1) num2str((1:maxchans).')]);
     set(handles.channum_popup,'String',channels)
-    handles.output.cal(1,1:deviceinfo(inputsel).maxInputs) = NaN;
+    handles.output.cal(1,1:maxchans) = NaN;
     handles.output.units = 'Pa';
     handles.output.units_ref = 2e-5;
     handles.output.units_type = 1;
@@ -134,7 +176,9 @@ function done_btn_Callback(~, ~, handles) %#ok : Executed when Done bunnos is cl
 % hObject    handle to done_btn (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
+delete(handles.har)
+delete(handles.hap)
+delete(handles.hsr1)
 uiresume(handles.syscal);
 
 
@@ -203,7 +247,7 @@ switch stimulus
         S = OATSP(duration,0.5,handles.mainHandles.fs,1,0);
         handles.hsr1.Signal = S.audio./max(abs(S.audio));
 end
-handles.hsr1.Signal = [handles.hsr1.Signal;zeros(handles.hap.QueueDuration*handles.mainHandles.fs,1)];
+handles.hsr1.Signal = handles.hsr1.Signal;
 set(hObject,'BackgroundColor','red');
 pause on
 pause(0.000001)
@@ -211,9 +255,12 @@ pause off
 try
     ncycles = ceil(length(handles.hsr1.Signal)/handles.hsr1.SamplesPerFrame);
     audio = zeros(ncycles*handles.hsr1.SamplesPerFrame,1);
+    setup(handles.hap, zeros(handles.hsr1.SamplesPerFrame,1))
+    [~] = handles.har();
+    handles.hap(zeros(handles.mainHandles.buffer,1));
     for i = 1:ncycles
-        audio((i-1)*handles.har.SamplesPerFrame+1:i*handles.har.SamplesPerFrame,:) = step(handles.har);
-        step(handles.hap,step(handles.hsr1));
+        audio((i-1)*handles.har.SamplesPerFrame+1:i*handles.har.SamplesPerFrame,:) = handles.har();
+        handles.hap(handles.hsr1());
     end
 catch sthgwrong
     syswarning = sthgwrong.message;
@@ -223,8 +270,8 @@ catch sthgwrong
 end
 rec = audio;
 if ~isempty(rec)
-    qd = handles.mainHandles.fs*handles.har.QueueDuration;
-    rec = rec(qd:end);
+%     qd = handles.mainHandles.fs*handles.har.QueueDuration;
+%     rec = rec(qd:end);
     rec = rec(1:length(S.audio));
     rec = [rec;zeros(length(handles.hsr1.Signal),1)];
     if stimulus == 1
@@ -242,7 +289,8 @@ if ~isempty(rec)
     abovethresh = find(IRlevel > abs(handles.latthresh)*-1);
     [~,I1] = max(IRlevel(abovethresh));
     handles.maxIR = abovethresh(I1);
-    I = abovethresh(1);
+%     I = abovethresh(1); JH minus 1 sample
+    I = abovethresh(1) - 1;
     plot(handles.IRaxes,t,IRlevel,t,ones(size(t)).*handles.latthresh.*-1,'r',handles.maxIR/handles.mainHandles.fs,IRlevel(handles.maxIR),'or')
     hold(handles.IRaxes,'on')
     plot(handles.IRaxes,I/handles.mainHandles.fs,IRlevel(I),'o','Color',[0 .6 0])
@@ -403,7 +451,8 @@ function latinstructions_btn_Callback(~, ~, ~) %#ok : Executed when instructions
 message{1} = 'Instructions:';
 message{2} = '1. Make sure your audio interface is correctly plugged into your machine.';
 message{3} = '2. Make a feedback loop between INPUT 1 and OUTPUT 1';
-message{4} = '3. Press the -Evaluate- button to test the system latency.';
+message{4} = '3. Select Audio Device and set device settings in audio recorder BEFORE calibration';
+message{5} = '4. Press the -Evaluate- button to test the system latency.';
 
 helpdlg(message,'AARAE info')
 
@@ -1296,10 +1345,11 @@ pause on
 pause(0.000001)
 pause off
 % Set record object
-set(handles.har,'NumChannels',get(handles.channum_popup,'Value'))
+handles.har.ChannelMapping = get(handles.channum_popup,'Value');
+% set(handles.har,'ChannelMapping',get(handles.channum_popup,'Value'))
 guidata(hObject,handles)
 ncycles = ceil(dur/handles.har.SamplesPerFrame);
-audio = zeros(ncycles*handles.har.SamplesPerFrame,get(handles.channum_popup,'Value'));
+audio = zeros(ncycles*handles.har.SamplesPerFrame,1);
 if isfield(handles,'filtaudio'), handles = rmfield(handles,'filtaudio'); end
 % Initialize record routine
 set(hObject,'BackgroundColor','red');
@@ -1308,13 +1358,13 @@ try
     for i = 1:ncycles
        UserData = get(handles.stop_btn,'UserData');
        if UserData.state == false
-           audio((i-1)*handles.har.SamplesPerFrame+1:i*handles.har.SamplesPerFrame,:) = step(handles.har);
+           audio((i-1)*handles.har.SamplesPerFrame+1:i*handles.har.SamplesPerFrame,:) = handles.har();
        else
            break
        end
-       pause on
-       pause(0.000001)
-       pause off
+%        pause on
+%        pause(0.000001)
+%        pause off
     end
 catch sthgwrong
     UserData.state = true;
@@ -1325,7 +1375,7 @@ end
 rec = audio;
 % Check recording and adjust for Duration
 if ~isempty(rec)
-    rec = rec(:,get(handles.channum_popup,'Value'));
+% % %     rec = rec(:,get(handles.channum_popup,'Value'));
     if UserData.state == false
         rec = rec(1:dur);
     else

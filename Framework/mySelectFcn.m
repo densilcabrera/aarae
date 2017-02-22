@@ -134,7 +134,17 @@ function mySelectFcn(tree, ~)
             if ~ismatrix(audiodata.audio)
                 set(mainHandles.channel_panel,'Visible','on');
                 set(mainHandles.IN_nchannel,'String','1');
-                set(mainHandles.tchannels,'String',['/ ' num2str(size(audiodata.audio,2))]);
+                if size(audiodata.audio,5) >1
+                    if get(mainHandles.chandisp, 'Value') == 2
+                        set(mainHandles.tchannels,'String',['/ ' num2str(size(audiodata.audio,5))]);
+                    else
+                        set(mainHandles.tchannels,'String',['/ ' num2str(size(audiodata.audio,2))]);
+                    end
+                    set(mainHandles.chandisp,'String',{'Input Channels'; 'Output Channels'})
+                else
+                    set(mainHandles.tchannels,'String',['/ ' num2str(size(audiodata.audio,2))]);
+                    set(mainHandles.chandisp,'String',{'Input Channels'})
+                end
                 if ndims(audiodata.audio) == 3, cmap = colormap(hsv(size(audiodata.audio,3))); end
                 if ndims(audiodata.audio) == 4, cmap = colormap(copper(size(audiodata.audio,4))); end
                 if ndims(audiodata.audio) >= 5, cmap = colormap(cool(size(audiodata.audio,5))); end
