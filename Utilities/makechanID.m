@@ -8,7 +8,9 @@ function chanID = makechanID(nchan,format,param)
 % 2: polar coordinates using degrees, e.g., 90 deg,  45 deg, 1.4142 m
 % 3: polar coordinates using radians, e.g., 0 rad,  1.3 rad, 1.4142 m
 % 4: Cartesian coordinates using metres, e.g., 1 m, 3 m, -4 m
-% 10: use this for output channels: Outchan1;Outchan2;...
+% 10: use this for output channels: OutCh1;OutCh2;...
+% 11: InChan1; InChan2;... (used to explicitly distinguish input vs output
+%     channels)
 % 20: use this for dimension 6: Dim6_1; Dim6_2;...
 %
 % If format 0 is used, the param argument can optionally be used to provide
@@ -116,16 +118,25 @@ switch format
             num2str(param(:,3)),repmat(' m',[size(param,1),1])]);
         end
      case 10
-        % generic chanID in the form of 'Chan1', 'Chan2', etc
+        % generic output chanID in the form of 'OutCh1', 'OutCh2', etc
         if exist('param','var')
             offset = param(1,1);
         else
             offset = 0;
         end
-        chanID = cellstr([repmat('Outchan',[nchan,1])...
+        chanID = cellstr([repmat('Outch',[nchan,1])...
+            num2str(offset+(1:nchan)')]);
+     case 11
+        % generic input chanID in the form of 'InChan1', 'InChan2', etc
+        if exist('param','var')
+            offset = param(1,1);
+        else
+            offset = 0;
+        end
+        chanID = cellstr([repmat('InChan',[nchan,1])...
             num2str(offset+(1:nchan)')]);
      case 20
-        % generic chanID in the form of 'Chan1', 'Chan2', etc
+        % generic Dim 6 ID in the form of 'Dim6_1', 'Dim6_2', etc
         if exist('param','var')
             offset = param(1,1);
         else

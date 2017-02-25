@@ -590,7 +590,7 @@ if get(handles.pb_enable,'Value') == 1
                             numUnderrun(i) = handles.hap(handles.hsr1());
                             if numUnderrun(i) + numOverrun(i) >0 && nattempt >0
                                 ermessage = ['Error... Trying again in ', num2str(handles.addtime), 's']; 
-                                waitbar(((outind-1)*ncycles+i)/(length(OutCh)*ncycles),h, ermessage)
+                                %waitbar(((outind-1)*ncycles+i)/(length(OutCh)*ncycles),h, ermessage)
                                 pause(handles.addtime)
                                 release(handles.hsr1)
                                 reset(handles.hsr1)
@@ -613,7 +613,7 @@ if get(handles.pb_enable,'Value') == 1
                                     numUnderrun(i) = handles.hap(handles.hsr1());
                                     if numUnderrun(i) + numOverrun(i) >0 && nattempt >0
                                         ermessage = ['Error... Attempt: ', num2str(j), '... Trying again in ', num2str(handles.addtime), 's']; 
-                                        waitbar(((outind-1)*ncycles+i)/(length(OutCh)*ncycles),h, ermessage)
+                                        %waitbar(((outind-1)*ncycles+i)/(length(OutCh)*ncycles),h, ermessage)
                                         pause(handles.addtime)
                                         release(handles.hsr1)
                                         reset(handles.hsr1)
@@ -716,7 +716,7 @@ if get(handles.pb_enable,'Value') == 1
             handles.Underrun = numUnderrun;
             handles.Overrun = numOverrun;
             handles.error = 1;
-            % % % % %             f = figure('Name','Reverberation Parameters', ...
+            % % % % %             f = figure('Name','Recording Errors', ...
             % % % % %                 'Position',[200 200 620 360]);
             % % % % %             inderror = 1:ncycles;
             % % % % %             daterror = [numOverrun,numUnderrun];
@@ -838,7 +838,7 @@ else
             handles.Underrun = [];
             handles.Overrun = numOverrun;
             handles.error = 1;
-            % % % % %             f = figure('Name','Reverberation Parameters', ...
+            % % % % %             f = figure('Name','Recording Errors', ...
             % % % % %                 'Position',[200 200 620 360]);
             % % % % %             inderror = 1:ncycles;
             % % % % %             daterror = [numOverrun,numUnderrun];
@@ -1001,7 +1001,7 @@ else
     if get(handles.test, 'Value') == 1 && handles.error == 1
         handles.recording.error.Underrun = handles.Underrun;
         handles.recording.error.Overrun = handles.Overrun;
-    else end
+    end
     if get(handles.pb_enable,'Value') && isfield(handles.outputdata,'audio2')
         handles.recording.audio2 = handles.outputdata.audio2;
     elseif get(handles.pb_enable,'Value') && ~isfield(handles.outputdata,'audio2')
@@ -1023,10 +1023,10 @@ else
     if get(handles.sim_chk,'Value') == 0
         OutCh = str2num(get(handles.IN_numchsout,'String'));
         try
-            handles.recording.OutchanID = cellstr([repmat('OutChan',size(handles.recording.audio,5),1) num2str((OutCh)')]);
+            handles.recording.OutchanID = cellstr([repmat('OutCh',size(handles.recording.audio,5),1) num2str((OutCh)')]);
             
         catch
-            handles.recording.OutchanID = cellstr([repmat('OutChan',size(handles.recording.audio,5),1) num2str((1:size(handles.recording.audio,5))')]);
+            handles.recording.OutchanID = cellstr([repmat('OutCh',size(handles.recording.audio,5),1) num2str((1:size(handles.recording.audio,5))')]);
         end
     end
     if get(handles.cal_chk,'Value') == 1

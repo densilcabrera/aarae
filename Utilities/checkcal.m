@@ -5,7 +5,7 @@ function signaldata = checkcal(signaldata)
 % It also checks that the cal vector matches the number of channels, and 
 % fixes this if there is a discrepancy.
 % This function is called by AARAE framework functions in serveral places
-% (whenenver there is the potential for new audio structures to be added).
+% (whenever there is the potential for new audio structures to be added).
 
 nullstring = 'Val';
 

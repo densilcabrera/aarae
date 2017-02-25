@@ -14,7 +14,21 @@ function [out,format] = readchanID(chanID)
 %
 % See the code for more information on the imputs and outputs.
 
-if ~isempty(regexp(char(chanID{1}),'Chan','once'))
+
+if ~isempty(regexp(char(chanID{1}),'InChan','once'))
+    % generic chanID in the form of 'InChan1', 'InChan2', etc
+    out = zeros(length(chanID),1);
+    for n = 1:length(chanID)
+         cellval = regexp(chanID{n},'-?\d+\.?\d*|-?\d*\.?\d+','match');
+         if size(cellval,2)~=1
+            out = [];
+            return
+        end
+         out(n) = str2double(cellval{1});
+    end
+    format = 11;
+    
+elseif ~isempty(regexp(char(chanID{1}),'Chan','once'))
     % generic chanID in the form of 'Chan1', 'Chan2', etc
     out = zeros(length(chanID),1);
     for n = 1:length(chanID)
@@ -27,8 +41,8 @@ if ~isempty(regexp(char(chanID{1}),'Chan','once'))
     end
     format = 0;
     
-elseif ~isempty(regexp(char(chanID{1}),'Outchan','once'))
-    % generic dimension 4 (output channel) ID in the form of 'Outchan1', 'Outchan2', etc
+elseif ~isempty(regexp(char(chanID{1}),'OutCh','once'))
+    % generic dimension 5 (output channel) ID in the form of 'OutCh1', 'OutCh2', etc
     out = zeros(length(chanID),1);
     for n = 1:length(chanID)
          cellval = regexp(chanID{n},'-?\d+\.?\d*|-?\d*\.?\d+','match');
