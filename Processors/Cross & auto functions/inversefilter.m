@@ -403,6 +403,7 @@ if ~isempty(fs) && ~isempty(Threshold) && ~isempty(hiF) && ~isempty(loF) && ~ise
         else
             OUT.audio = out;
         end
+        OUT.chanID = makechanID(size(OUT.audio,2),0);
         OUT.funcallback.name = 'inversefilter.m';
         OUT.funcallback.inarg = {fs,Threshold,hiF,loF,rolloffslope,zeropad,octsmooth,linsmooth,phasemode,rotateinv,windowoutput,writetoaudio2};
     else
