@@ -47,8 +47,16 @@ if ~isempty(audio) && ~isempty(fs)
         'ReleaseTime',ReleaseTime,...
         'HoldTime',HoldTime,...
         'SampleRate',fs);
-    audio = dRG(audio);
-    
+  [~,~,bands,dim4,dim5,dim6] = size(audio);
+    for b = 1:bands
+        for d4 = 1:dim4
+            for d5 = 1:dim5
+                for d6 = 1:dim6
+                    audio(:,:,b,d4,d5,d6) = dRG(audio(:,:,b,d4,d5,d6));
+                end
+            end
+        end
+    end    
   
     if isstruct(IN)
         OUT = IN; 
