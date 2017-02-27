@@ -590,7 +590,7 @@ if get(handles.pb_enable,'Value') == 1
                             numUnderrun(i) = handles.hap(handles.hsr1());
                             if numUnderrun(i) + numOverrun(i) >0 && nattempt >0
                                 ermessage = ['Error... Trying again in ', num2str(handles.addtime), 's']; 
-                                %waitbar(((outind-1)*ncycles+i)/(length(OutCh)*ncycles),h, ermessage)
+                                waitbar((i/ncycles),h, ermessage)
                                 pause(handles.addtime)
                                 release(handles.hsr1)
                                 reset(handles.hsr1)
@@ -613,7 +613,7 @@ if get(handles.pb_enable,'Value') == 1
                                     numUnderrun(i) = handles.hap(handles.hsr1());
                                     if numUnderrun(i) + numOverrun(i) >0 && nattempt >0
                                         ermessage = ['Error... Attempt: ', num2str(j), '... Trying again in ', num2str(handles.addtime), 's']; 
-                                        %waitbar(((outind-1)*ncycles+i)/(length(OutCh)*ncycles),h, ermessage)
+                                        waitbar((i/ncycles),h, ermessage)
                                         pause(handles.addtime)
                                         release(handles.hsr1)
                                         reset(handles.hsr1)
