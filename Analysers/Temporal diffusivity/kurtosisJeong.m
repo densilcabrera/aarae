@@ -1,5 +1,5 @@
 function OUT = kurtosisJeong(IN,keepD, plotIR, stept, winlen)
-% This function assesses the kurtosis of inpulse response measurements as a
+% This function assesses the kurtosis of impulse response measurements as a
 % measure of diffuseness according to:
 %     C.H. Jeong, Kurtosis of room impulse responses as a diffuseness
 %     measure for reverberation chambers, The Journal of the Acoustical
