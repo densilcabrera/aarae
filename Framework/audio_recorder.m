@@ -90,15 +90,15 @@ else
     %*****    inputdevinfo = dspAudioDeviceInfo('inputs');
     try % for windows machines look for ASIO device.. Consider adding a tick box to use ASIO|Direct Sound. This would need to be added in settings
         aDW = audioDeviceWriter('Driver', 'ASIO');
-        inputnames = getAudioDevices(aDW);
-        if isfield(inputnames, 'No audio ouput device detected')
+        outputnames = getAudioDevices(aDW);
+        if strcmp(outputnames,{'No audio output device detected'})
             delete(aDW)
             error('No ASIO Device Detected')
         else
         end
         aDR = audioDeviceReader('Driver', 'ASIO');
-        outputnames = getAudioDevices(aDR);
-        if isfield(outputnames, 'No audio ouput device detected')
+        inputnames = getAudioDevices(aDR);
+        if strcmp(inputnames{1,1}, {'No audio input device detected'})
             error('No ASIO Device Detected')
         else
         end
@@ -152,8 +152,17 @@ else
         
         if size(handles.outputdata.audio,2) == 1
             set([handles.text25,handles.IN_numchsout,handles.sim_chk],'Visible','on')
+        set(handles.IN_numchsout,'String',num2str(getappdata(hMain,'audio_recorder_numchsout')));
         else
             set([handles.text25,handles.IN_numchsout,handles.sim_chk],'Visible','off')
+            numchsout = (1:size(handles.outputdata.audio,2));
+            numchsout = numchsout(~isnan(numchsout));
+            numchsout = numchsout(numchsout>0);
+            numchsout = round(numchsout);
+            numchsout = unique(numchsout);
+            set(handles.IN_numchsout,'String',num2str(numchsout));
+            set(handles.sim_chk,'Value', 1)
+            
         end
         pixels = get_axes_width(handles.OUT_axes);
         [t, line] = reduce_to_width(handles.t', handles.outputdata.audio, pixels, [-inf inf]);
@@ -163,7 +172,7 @@ else
         set(handles.inputdev_popup,'Value',getappdata(hMain,'audio_recorder_input'));
         set(handles.outputdev_popup,'Value',getappdata(hMain,'audio_recorder_output'));
         set(handles.IN_numchs,'String',num2str(getappdata(hMain,'audio_recorder_numchs')));
-        set(handles.IN_numchsout,'String',num2str(getappdata(hMain,'audio_recorder_numchsout')));
+        
         set(handles.text1,'String','Add time');
         set(handles.IN_duration,'String',num2str(getappdata(hMain,'audio_recorder_duration')));
         set(handles.IN_fs,'Enable','off');
@@ -1318,6 +1327,7 @@ if get(hObject,'Value') == 1
         set([handles.text25,handles.IN_numchsout,handles.sim_chk],'Visible','on')
     else
         set([handles.text25,handles.IN_numchsout,handles.sim_chk],'Visible','off')
+        set(handles.sim_chk,'Value', 1)
     end
     mainHandles = guidata(handles.main_stage1);
     selectednode = mainHandles.mytree.getSelectedNodes;
