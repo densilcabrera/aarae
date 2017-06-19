@@ -537,7 +537,6 @@ for b = 1:bands
     % linear regression for EDT
     o(:,b) = polyfit((irstart(1,b):edtend(1,b))', ...
         levdecay(irstart(1,b):edtend(1,b),b),1)';
-    EDT(1,b) = -60/o(1,b); % EDT
     EDT(1,b) = 6*((o(2,b)-10)/o(1,b)-(o(2,b)-0)/o(1,b))/fs;
     EDTr2(1,b) = corr(levdecay(irstart(1,b):edtend(1,b),b), ...
         (irstart(1,b):edtend(1,b))' * o(1,b) + o(2,b)).^2; % correlation coefficient
