@@ -235,6 +235,7 @@ crosspoint = repmat(len-startpoint,[1,1,bands,1,1,1]);
 % *************************************************************************
 % window length of smoothing filter for approximate IR envelope
 C = zeros(1,chans,bands,dim4,dim5,dim6);
+if ~exist('bandfc','var'), bandfc = 1000; end % used for soft-cropping
 if autotrunc == 1 || autotrunc == 2
     longestwindur = 50; % in ms (50 ms is used in Lundeby)
     shortestwindur = 10; %in ms (10 ms is used in Lundeby)
@@ -330,7 +331,7 @@ if autotrunc == 1 || autotrunc == 2
             for b = 1:bands
                 iroct(:,:,b,:,:,:) = octbandfilter_viaFFT(iroct(:,:,b,:,:,:),fs,bandfc(b),order,0,1000,0,phasemode);
             end
-        else % if bpo == 3
+        elseif bpo == 3
             for b = 1:bands
                 iroct(:,:,b,:,:,:) = thirdoctbandfilter_viaFFT(iroct(:,:,b,:,:,:),fs,bandfc(b),order,0,1000,0,phasemode);
             end
@@ -642,7 +643,13 @@ dat1 = [EDT;T20;T30;Tcustom;...
     C50;C80;D50;D80;Ts; ...
     EDTr2;T20r2;T30r2;Tcustomr2;...
     T20T30ratio;PNR];
-cnames1 = num2cell(bandfc);
+if bpo == 1 || bpo == 3
+    cnames1 = num2cell(bandfc);
+elseif bpo == 0 && bands == 1
+    cnames1 = {'Broadband'};
+elseif length(bandfc) == bands
+    cnames1 = num2cell(bandfc);
+end
 rnames1 = {'Early decay time (s)',...
     'Reverberation time T20 (s)',...
     'Reverberation time T30 (s)',...
@@ -736,7 +743,13 @@ for b = 1:bands
     
     
     % subplot title
-    title([num2str(bandfc(b)),' Hz'])
+    if bpo == 1 || bpo == 3
+        title([num2str(bandfc(b)),' Hz'])
+    elseif bpo == 0 && bands == 1
+        title('Broadband')
+    elseif length(bandfc) == bands
+        title([num2str(bandfc(b)),' Hz'])
+    end
     
 end % for band
 
