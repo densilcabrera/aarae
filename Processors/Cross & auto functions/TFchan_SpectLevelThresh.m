@@ -50,7 +50,7 @@ if nargin < 3
         'Plot (0 | 1)'};
     dlg_title = 'Settings';
     num_lines = 1;
-    def = {'1','-60', '10000', '100',num2str(defaultDuration),'0','0'};
+    def = {'1', '10000', '100','-60',num2str(defaultDuration),'0','0'};
     answer = inputdlg(prompt,dlg_title,num_lines,def);
     
     if ~isempty(answer)
