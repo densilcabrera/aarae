@@ -20,7 +20,7 @@ function OUT = sphereplotfromHOA(IN,fs,sphere_cover,start_time,end_time,max_orde
 % This function uses the HOAToolbox, by Nicolas Epain.
 %
 % Code by Daniel Jimenez, Luis Miranda and Densil Cabrera
-% Version 1.02 (30 August 2014)
+% Version 1.03 (18 August 2017)
 
 
 
@@ -31,6 +31,12 @@ if isstruct(IN)
     if isfield(IN,'cal')
         hoaSignals = cal_reset_aarae(hoaSignals,0,IN.cal);
     end
+    
+    if isfield(IN,'name') % Get the AARAE name if it exists
+        name = IN.name; % this is a string
+    else
+        name = ''; % empty string - can be concatenated without any problems
+    end
 else
     if nargin < 2
         fs = inputdlg({'Sampling frequency [samples/s]'},...
@@ -38,6 +44,7 @@ else
         fs = str2double(char(fs));
     end
     hoaSignals = IN;
+    name = '';
 end
 
 if abs(size(hoaSignals,2)^0.5 - round(size(hoaSignals,2)^0.5)) >1e-20
@@ -70,7 +77,7 @@ if isstruct(IN)
             num2str(max_order),...
             num2str(fs/2),...
             '0',...
-            '1'});
+            '0'});
         if isempty(param) || isempty(param{1,1}) || isempty(param{2,1}) || isempty(param{3,1}) || isempty(param{4,1}) || isempty(param{5,1}) || isempty(param{6,1})
             OUT = [];
             return;
@@ -179,8 +186,8 @@ switch plottype
         
         
         
-        for i = 1:size(hoaSignals,2);
-            for j = 1:numberofdirections;
+        for i = 1:size(hoaSignals,2)
+            for j = 1:numberofdirections
                 for b = 1:bands
                     beamsignals_for_directPlot(:,j,b) = beamsignals_for_directPlot(:,j,b)+(direct_sound_HOA(:,i,b).*hoa2SpkCfg_for_directplot.filters.gainMatrix(j,i));
                 end
@@ -320,8 +327,30 @@ for b = 1:bands
                     num2str(Goverdif(b)),', HOA dif. ', num2str(HOAdif(b))])
             end
     end
-    
+%     if isfield(IN,'bandID')
+%         logtext([num2str(IN.bandID(b)), ' Hz, Gover dif. ',...
+%                     num2str(Goverdif(b)),', HOA dif. ', num2str(HOAdif(b))]);
+%     else
+%         logtext(['Gover dif. ',...
+%                         num2str(Goverdif(b)),', HOA dif. ', num2str(HOAdif(b))]);
+%     end
 end
+
+
+fig1 = figure('Name',['Diffuseness ' name]);
+    if isstruct(IN)
+        if isfield(IN,'bandID')
+            colname = {IN.bandID};
+        else
+            colname = {repmat('results',[bands,1])};
+        end
+    else
+        colname = {repmat('results',[bands,1])};
+    end
+    table1 = uitable('Data',[Goverdif'; HOAdif'],...
+                'ColumnName',colname,...
+                'RowName',{'Gover dif.','HOA dif.'});
+    disptables(fig1,table1);
 
 if isstruct(IN)
     OUT.funcallback.name = 'sphereplotfromHOA.m';

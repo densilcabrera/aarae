@@ -855,9 +855,12 @@ switch method
         f = 20:20000;
         k = 2*pi*f./c;
         Q = (k.*a).^2 ./ (1 -besselj(1,2.*k.*a)./(k.*a)); % directivity factor
-        Force = rho.*c.*v0.*(1-besselj(1,2.*k.*a)./(k*a) + 1i*StruveH1(2.*k.*a)./(k.*a));
-        Zrad = Force ./ (pi*a.^2 .* v0); % radiation impedance
+        Force = rho.*c.*v0.*((1-besselj(1,2.*k.*a)./(k*a)) + 1i*StruveH1(2.*k.*a)./(k.*a));
+        Zrad = Force ./ (pi*a.^2 .* v0); % radiation impedance - this seems to be wrong
         Power = 0.5 .* abs(v0).^2 .* rho.*c./(pi.*a.^2).*(1 -besselj(1,2.*k.*a)./(k.*a));
+        
+        % Alternative Zrad equation from Beranek - seems wrong
+        %Zrad = pi*a.^2*rho*c*(1-besselj(1,2.*k.*a)./(k.*a))+1i*pi*rho*c./(2*k.^2).*besselk(1,2.*k.*a);
         
         figure1 = figure('Name','Rigid circular piston in infinite baffle');
         axes1 = axes('Parent',figure1);
