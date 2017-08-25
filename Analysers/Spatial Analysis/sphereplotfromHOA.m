@@ -350,8 +350,9 @@ fig1 = figure('Name',['Diffuseness ' name]);
     table1 = uitable('Data',[Goverdif'; HOAdif'],...
                 'ColumnName',colname,...
                 'RowName',{'Gover dif.','HOA dif.'});
-    disptables(fig1,table1);
-
+    [~,tables] = disptables(fig1,table1);
+    OUT.tables = tables;
+    
 if isstruct(IN)
     OUT.funcallback.name = 'sphereplotfromHOA.m';
     OUT.funcallback.inarg = {fs,sphere_cover,start_time,end_time,max_order,hif,lof,plottype};
