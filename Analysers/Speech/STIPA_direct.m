@@ -33,10 +33,15 @@ if isstruct(in)
     fs = in.fs;
     if isfield(in,'cal')
         cal = in.cal;
-        calgain = 10^(cal/20);
+        calgain = 10.^(cal/20);
     else
         cal = 0;
         calgain = 1;
+    end
+    if isfield(in,'name') % Get the AARAE name if it exists
+        name = in.name; % this is a string
+    else
+        name = ''; % empty string - can be concatenated without any problems
     end
 else
     audio = in;
@@ -45,18 +50,19 @@ else
                            'Cal',1,{'0'});
         cal = str2num(char(cal));
     end
-    calgain = 10^(cal/20);
+    calgain = 10.^(cal/20);
     if nargin < 2
         fs = inputdlg({'Sampling frequency [samples/s]'},...
                            'Fs',1,{'48000'});
         fs = str2num(char(fs));
     end
+    name = '';
 end
 
 if nargin < 7, dorefsig = 0; end
 if nargin < 6, doplot = 1; end
 if nargin < 5, AuditoryMasking = 1; end
-if nargin < 4,
+if nargin < 4
     refsignal = [];
     % dialog box to get auditory masking, noise correction  and
     % auralization settings
@@ -161,9 +167,9 @@ if ~isempty(audio) && ~isempty(fs) && ~isempty(cal) && ~isempty(AuditoryMasking)
             for k=2:7
                 if Level(1,ch,k-1)< 63
                     amfdB(1,ch,k)=0.5*Level(1,ch,k-1)-65;
-                elseif Level(1,ch,k-1) < 67;
+                elseif Level(1,ch,k-1) < 67
                     amfdB(1,ch,k)=1.8*Level(1,ch,k-1)-146.9;
-                elseif Level(1,ch,k-1) < 100;
+                elseif Level(1,ch,k-1) < 100
                     amfdB(1,ch,k)=0.5*Level(1,ch,k-1)-59.8;
                 else
                     amfdB(1,ch,k)=-10;
@@ -221,9 +227,29 @@ if ~isempty(audio) && ~isempty(fs) && ~isempty(cal) && ~isempty(AuditoryMasking)
     out.STIPA = STIPA;
     out.MTI = MTI;
     out.MTF = MTF;
+    out.Level = Level;
     out.funcallback.name = 'STIPA_direct.m';
     out.funcallback.inarg = {fs,cal,refsignal,AuditoryMasking,doplot,dorefsig};
 
+    
+    % -------------------------------------------------------------------------
+    % CREATE OUTPUT TABLES
+    % -------------------------------------------------------------------------
+    out.tables = [];
+    for ch = 1:chans
+        fig1 = figure('Name',['My results table for ' name]);
+        table1 = uitable('Data',[permute(Level(:,ch,:),[2,3,1]); MTI(ch,:); permute(MTF(ch,:,:),[3,2,1])],...
+            'ColumnName',{'125','250','500','1000','2000','4000','8000'},...
+            'RowName',{'Level','MTI','MTF1','MTF2'});
+        table2 = uitable('Data',STIPA(ch),...
+            'ColumnName', {['Chan ' num2str(ch)]},...
+            'RowName', {'STIPA'});
+        [~,table] = disptables(fig1,[table1,table2]);
+        out.tables = [out.tables table];
+    end
+    
+    
+    
     % -------------------------------------------------------------------------
     % PLOTTING
     % -------------------------------------------------------------------------
