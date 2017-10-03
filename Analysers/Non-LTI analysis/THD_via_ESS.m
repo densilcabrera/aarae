@@ -155,7 +155,7 @@ if ~isempty(IR) && ~isempty(fs) && ~isempty(T) && ~isempty(freqs)&& ~isempty(rel
         %Finding the pseudo-IRs, trimming them based on their amplitude compared to background noise, and putting
         %them in a matrix.
         
-        for sn=2:nswps;
+        for sn=2:nswps
             thissweep=IR(:,chn,1,sn);
             [~,dirac]=max(abs(thissweep)); % the location of the Linear Impulse Response
             if dirac<(gd_lnr_wndwb) % if the maximum point in the full IR falls outside this range, there is most likely an error.
@@ -178,7 +178,7 @@ if ~isempty(IR) && ~isempty(fs) && ~isempty(T) && ~isempty(freqs)&& ~isempty(rel
                 figure('Name', ['IR Windows, ', sweepstring, chanstring]);
             end
             
-            for p=1:nh; %Looking at all linear and pseudo IRs.
+            for p=1:nh %Looking at all linear and pseudo IRs.
                 
                 sec_offset=(((log10(p))./en)); %the location offset for the sought harmonic IR in seconds LOG BASE 10 WORKS, NOT LN!!
                 samp_offset=ceil(sec_offset.*fs); %the location offset for the sought harmonic IR in samples
@@ -266,7 +266,7 @@ if ~isempty(IR) && ~isempty(fs) && ~isempty(T) && ~isempty(freqs)&& ~isempty(rel
                 % large vector to zero pad it.
                 seglens=stp(p,sn)-strt(p,sn)+1; %the length of this segment
                 olens=big_mat-seglens;
-                if olens>2;
+                if olens>2
                     inlens=round((olens)/2)+1;
                 else
                     inlens=1;
@@ -320,7 +320,7 @@ if ~isempty(IR) && ~isempty(fs) && ~isempty(T) && ~isempty(freqs)&& ~isempty(rel
         
         
         if ampl_norm==1 %Calculating the transfer function of each IR with amplitude normalisation
-            for sn=2:nswps;
+            for sn=2:nswps
                 for p=1
                     
                     linear_TF(:,sn)=abs(fft(Harmonic_Seg(:,p,sn).*tukeywin(mid_mat))); %the non-normalised TF of the linear IR is used to normalise the harmonics
@@ -336,8 +336,9 @@ if ~isempty(IR) && ~isempty(fs) && ~isempty(T) && ~isempty(freqs)&& ~isempty(rel
                 end
             end
             
-        else if ampl_norm==0 %Calculating the transfer function of each IR without using amplitude normalisation
-                for sn=2:nswps;
+        else
+            if ampl_norm==0 %Calculating the transfer function of each IR without using amplitude normalisation
+                for sn=2:nswps
                     for p=1:nh
                         harmonic_mags(:,p,sn) = abs((fft(Harmonic_Seg(:,p,sn).*tukeywin(mid_mat)))); % into freq. domain, no magnitude normalisation
                         harmonic_db_mags(:,p,sn) = 20.* log10(harmonic_mags(:,p,sn));  %each magnitude normalised IR on a DB scale
@@ -362,7 +363,7 @@ if ~isempty(IR) && ~isempty(fs) && ~isempty(T) && ~isempty(freqs)&& ~isempty(rel
             %calculating the amplitude of individual harmonics and frequency
             %normalising them
             amp_indv_h=zeros(mid_mat,p,nswps);
-            for sn=2:nswps;
+            for sn=2:nswps
                 for p=1:nh
                     for d=1:mid_mat
                         pd=p*d;
@@ -386,7 +387,7 @@ if ~isempty(IR) && ~isempty(fs) && ~isempty(T) && ~isempty(freqs)&& ~isempty(rel
             
             if indv_harmonic==1 %Plotting the levels of each harmonic for each sweep. No averaging.
                 
-                for sn=2:nswps;
+                for sn=2:nswps
                     figure('Name',['THD', chanstring])
                     for p=1:nh
                         
@@ -408,7 +409,7 @@ if ~isempty(IR) && ~isempty(fs) && ~isempty(T) && ~isempty(freqs)&& ~isempty(rel
             
             %Plotting the THD of each sweep on the same plot. No averaging.
             figure('Name',['THD', chanstring])
-            for sn=2:nswps;
+            for sn=2:nswps
                 
                 m=mod((sn-1)*3,8);
                 semilogx(fft_frequencies_vector(:,1),Thdf_all_db(:,sn), ...
@@ -439,7 +440,7 @@ if ~isempty(IR) && ~isempty(fs) && ~isempty(T) && ~isempty(freqs)&& ~isempty(rel
             for n=2:nobs
                 obfs(n,1)=2.^(1/w).*(obfs(n-1,1));% 1/3 octave band centre frequencies
             end
-            for n=1:nobs;
+            for n=1:nobs
                 obfs(n,2)=obfs(n,1)./(2.^(1/(w*2))); % 1/3 octave band lowest  frequencies
                 obfs(n,3)=obfs(n,1).*(2.^(1/(w*2))); % 1/3 octave band highest frequencies
             end
@@ -464,7 +465,7 @@ if ~isempty(IR) && ~isempty(fs) && ~isempty(T) && ~isempty(freqs)&& ~isempty(rel
             
             % summing the means of all pseudo IRs at each 1/3 octave band
             
-            for sn=2:nswps;
+            for sn=2:nswps
                 
                 for p=1:nh
                     NY2=vone/p; %the highest valid measured frequency of a harmonic
@@ -491,7 +492,7 @@ if ~isempty(IR) && ~isempty(fs) && ~isempty(T) && ~isempty(freqs)&& ~isempty(rel
             % calculating THDf at each frequency as per Shmilovitz
             
             mthdf_db=zeros(nyi,nswps);
-            for sn=2:nswps;
+            for sn=2:nswps
                 for b=1:nyi
                     
                     mthdf_db(b,sn)=20*log10(sqrt(sum((mean_ampl(b,2:nh,sn).^2)))./mean_ampl(b,1,sn)); %THD from frequency band means on a dB scale
@@ -502,9 +503,9 @@ if ~isempty(IR) && ~isempty(fs) && ~isempty(T) && ~isempty(freqs)&& ~isempty(rel
         
         
         %%%%%%%%%%%%%%PLOTTING THE LEVELS OF THE INDIVIDUAL HARMONICS AVERAGED TO FREQUENCY BANDS%%%%%%%%%%%
-        if ave_or_reg==1;
+        if ave_or_reg==1
             if indv_harmonic==1
-                for sn=2:nswps;
+                for sn=2:nswps
                     figure('Name',['Harmonic Distortion ', chanstring])
                     for p=1:nh
                         m=mod(p,8)+1;
@@ -527,7 +528,7 @@ if ~isempty(IR) && ~isempty(fs) && ~isempty(T) && ~isempty(freqs)&& ~isempty(rel
         
         %%%% Plotting the total harmonic distortion per frequency from MEAN
         %%%% levels
-        if ave_or_reg==1;
+        if ave_or_reg==1
             figure('Name',['Harmonic Distortion ', chanstring])
             for sn=2:nswps
                 
