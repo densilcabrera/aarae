@@ -149,8 +149,8 @@ switch plottype
         
         
         
-        for i = 1:size(hoaSignals,2);
-            for j = 1:numberofdirections;
+        for i = 1:size(hoaSignals,2)
+            for j = 1:numberofdirections
                 for b = 1:bands
                     beamsignals_for_directPlot(:,j,b) = beamsignals_for_directPlot(:,j,b)+(direct_sound_HOA(:,i,b).*hoa2SpkCfg_for_directplot.filters.gainMatrix(i,j));
                 end
