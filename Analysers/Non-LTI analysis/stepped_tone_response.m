@@ -85,7 +85,7 @@ if nargin ==1
     
     param = str2num(char(param));
     
-    if length(param) < 5,
+    if length(param) < 5
         OUT = [];
         return 
     end
@@ -554,10 +554,8 @@ if ~isempty(audio) && ~isempty(fs) && ~isempty(cal)
     OUT.tables = tables;
     
     
-    OUT.funcallback.name = 'stepped_tone_response.m'; % Provide AARAE
-    
+    OUT.funcallback.name = 'stepped_tone_response.m';
     OUT.funcallback.inarg = {noiseadjust,highestharmonic,plottype,normalizeplots,weighting};
-    
 else
     OUT = [];
 end
