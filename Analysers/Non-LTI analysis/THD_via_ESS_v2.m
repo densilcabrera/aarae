@@ -1,4 +1,4 @@
-function OUT = THD_via_ESS_v2(IN,octsmooth,thresholddB,winlen,winpow1,winpow2)
+function OUT = THD_via_ESS_v2(IN,octsmooth,thresholddB,winlen,winpow1,winpow2,subtractnoise)
 % This function analyses harmonic distortion based on a multicycle
 % exponential sweep recording or impulse response
 %
@@ -87,20 +87,22 @@ if nargin == 1
         'Threshold above background noise to display as distortion [dB]';
         'Analysis window duration [s]';
         'Window fade-in power';
-        'Window fade-out power'},...
+        'Window fade-out power';
+        'Subtract noise [0 | 1]'},...
         'Silence Sweep Analysis',...
         [1 60],...
-        {'0','0','1','4','1'});
+        {'0','0','1','4','1','0'});
     
     param = str2num(char(param));
     
-    if length(param) < 5, param = []; end
+    if length(param) < 6, param = []; end
     if ~isempty(param)
         octsmooth = param(1);
         thresholddB = param(2);
         winlen = round(param(3) * fs);
         winpow1 = param(4);
         winpow2 = param(5);
+        subtractnoise = param(6);
     else
         % get out of here if the user presses 'cancel'
         OUT = [];
@@ -230,11 +232,33 @@ if octsmooth > 0
     sweepspect6(sweepspect6<0)=0;
 end
 
+if isinf(relgain(1))
+    relgainindices = 2:length(relgain);
+    includenoise = true;
+    if subtractnoise
+        sweepspect1(:,:,1,relgainindices,:,:) = sweepspect1(:,:,1,relgainindices,:,:) - repmat(sweepspect1(:,:,1,1,:,:),[1,1,1,length(relgainindices),1,1]);
+        sweepspect1(sweepspect1<0)=0;
+        sweepspect2(:,:,1,relgainindices,:,:) = sweepspect2(:,:,1,relgainindices,:,:) - repmat(sweepspect2(:,:,1,1,:,:),[1,1,1,length(relgainindices),1,1]);
+        sweepspect2(sweepspect2<0)=0;
+        sweepspect3(:,:,1,relgainindices,:,:) = sweepspect3(:,:,1,relgainindices,:,:) - repmat(sweepspect3(:,:,1,1,:,:),[1,1,1,length(relgainindices),1,1]);
+        sweepspect3(sweepspect3<0)=0;
+        sweepspect4(:,:,1,relgainindices,:,:) = sweepspect4(:,:,1,relgainindices,:,:) - repmat(sweepspect4(:,:,1,1,:,:),[1,1,1,length(relgainindices),1,1]);
+        sweepspect4(sweepspect4<0)=0;
+        sweepspect5(:,:,1,relgainindices,:,:) = sweepspect5(:,:,1,relgainindices,:,:) - repmat(sweepspect5(:,:,1,1,:,:),[1,1,1,length(relgainindices),1,1]);
+        sweepspect5(sweepspect5<0)=0;
+        sweepspect6(:,:,1,relgainindices,:,:) = sweepspect6(:,:,1,relgainindices,:,:) - repmat(sweepspect6(:,:,1,1,:,:),[1,1,1,length(relgainindices),1,1]);
+        sweepspect6(sweepspect6<0)=0;
+    end
+else
+    relgainindices = 1:length(relgain);
+    includenoise = false;
+end
+
 
 
 linecolor = HSVplotcolours2(cycles, 1, 1); % H,S,V
 
-
+% Impulse response figure(s)
 for d6 = 1:dim6
     for d5 = 1:dim5
         for ch = 1:chans
@@ -346,7 +370,7 @@ for d6 = 1:dim6
     end
 end
 
-
+% Spectrum figure(s)
 for d6 = 1:dim6
     for d5 = 1:dim5
         for ch = 1:chans
@@ -440,15 +464,9 @@ end
 
 
 
-if isinf(relgain(1))
-    relgainindices = 2:length(relgain);
-    includenoise = true;
-else
-    relgainindices = 1:length(relgain);
-    includenoise = false;
-end
 
 
+% Harmonic distortion figure - one fig per non-silent cycle
 for d6 = 1:dim6
     for d4 = relgainindices
         compplot = figure('Name',['Harmonic distortion relative to linear response, ' num2str(relgain(d4)) ' dB']);
@@ -550,7 +568,7 @@ end
 
 
 
-
+% THD figure
 for d6 = 1:dim6
     compplot = figure('Name',['THD, ' IN.name char(dim6ID(d6))]);
     numberofsubplots = chans * dim5;
@@ -632,7 +650,7 @@ end
 
 
 OUT.funcallback.name = 'THD_via_ESS_v2.m';
-OUT.funcallback.inarg = {octsmooth,thresholddB,winlen,winpow1,winpow2};
+OUT.funcallback.inarg = {octsmooth,thresholddB,winlen,winpow1,winpow2,subtractnoise};
 
 %**************************************************************************
 % Copyright (c) 2017, Densil Cabrera
