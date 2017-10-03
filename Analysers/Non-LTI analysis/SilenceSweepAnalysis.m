@@ -158,7 +158,7 @@ if dim6 > 1
     if isfield(IN,'dim6ID')
         dim6ID = IN.dim6ID;
     else
-        dim6ID = makechanID(dim5,20);
+        dim6ID = makechanID(dim6,20);
     end
 else
     dim6ID = {''};
