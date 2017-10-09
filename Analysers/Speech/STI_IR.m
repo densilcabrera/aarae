@@ -66,9 +66,16 @@ function [Verbose,varargout]=STI_IR(IR, fs, Lsignal, Lnoise, AuditoryMasking, No
 % AuditoryMasking
 %   0: disable the auditory masking functions
 %   1 (or 2011): enable the auditory masking functions (default), following
-%     IEC 60268-16 (2011)).
+%     IEC 60268-16 (2011).
 %   2 (or 2003): enable the auditory masking functions, following
-%     IEC 60268-16 (2003)).
+%     IEC 60268-16 (2003).
+%   -2011: enable auditory masking from IEC 60268-16 (2011), but without
+%     auditory reception threshold
+%   -2003: enable auditory masking from IEC 60268-16 (2003), but without
+%     auditory reception threshold.
+%   -1: enable auditory reception threshold, but without auditory masking.
+%   1985: no masking or auditory reception threshold, with S/N valuese
+%     calculated as described by Houtgast (1985).
 %
 % NoiseCorrection:
 %   0: disable adjustment for background noise
@@ -79,8 +86,11 @@ function [Verbose,varargout]=STI_IR(IR, fs, Lsignal, Lnoise, AuditoryMasking, No
 %   very low background noise level (via the 'Lnoise' input argument).
 %
 % doplot
-%   0: do not plot
-%   1: plot the modulation transfer functions and transmission indices(default)
+%   0: do not plot; do output AARAE result leafs
+%   1: plot the modulation transfer functions and transmission
+%   indices(default), and do output AARAE result leafs
+%   -1: do plot but do not output AARAE result leafs
+%   -2: do not plot and do not output AARAE result leafs
 %
 % fs: the audio sampling rate of the impulse response.
 %   If a wave file is read, then this is not used (fs is read from the file).
@@ -607,6 +617,7 @@ MTF = zeros(length(mf),length(fc),chans); % modulation transfer function
 M_STI0 = zeros(chans,1); % male STI
 F_STI0 = zeros(chans,1); % female STI
 STIPA0 = zeros(chans,1); % STIPA
+STI_1985 = zeros(chans,1);
 MTI0=zeros(chans,length(fc)); % modulation transfer indices
 MTF0 = zeros(length(mf),length(fc),chans); % modulation transfer function
 
@@ -660,7 +671,7 @@ for ch = 1:chans
                 end
             end
         end
-        for k=1:length(fc);
+        for k=1:length(fc)
             if FilterVersion == 0
                 % linear phase filter, but frequency selectivity does not
                 % meet class 0 or 1
@@ -728,7 +739,7 @@ for ch = 1:chans
     %***************************************************************
     % Calculate output parameters prior to noise correction and auditory
     % masking.
-    [M_STI0(ch), F_STI0(ch), STIPA0(ch), MTI0(ch,:)] = CalculateSTI(MTF_ch);
+    [M_STI0(ch), F_STI0(ch), STIPA0(ch), MTI0(ch,:), STI_1985(ch)] = CalculateSTI(MTF_ch);
     
     
     
@@ -751,6 +762,15 @@ for ch = 1:chans
             [Iam, Irt] = AM(Lsignal(ch,:), Lnoise(ch,:), 2011);
         case 2003
             [Iam, Irt] = AM(Lsignal(ch,:), Lnoise(ch,:), 2003);
+        case -2011 % Ed 4 auditory masking without reception threshold
+            Iam = AM(Lsignal(ch,:), Lnoise(ch,:), 2011);
+            Irt = zeros(1,7);
+        case -2003 % Ed 4 auditory masking without reception threshold
+            Iam = AM(Lsignal(ch,:), Lnoise(ch,:), 2003);
+            Irt = zeros(1,7);
+        case -1 % reception threshold without auditory masking
+            [~, Irt] = AM(Lsignal(ch,:), Lnoise(ch,:), 2011);
+            Iam = zeros(1,7);
         otherwise
             Iam = zeros(1,7);
             Irt = zeros(1,7);
@@ -961,9 +981,9 @@ for ch = 1:chans
             %set(t,'ColumnWidth',{60});
             
             
-            dat3 = [M_STI(ch);F_STI(ch);STIPA(ch)];
+            dat3 = [M_STI(ch);F_STI(ch);STIPA(ch);M_STI0(ch);F_STI0(ch);STIPA0(ch);STI_1985(ch)];
             cnames3 = {'value'};
-            rnames3 = {'STI male','STI female','STIPA(IR)'};
+            rnames3 = {'STI male','STI female','STIPA(IR)','M_STI without masking','F_STI0 without masking','STIPA without masking','STI 1985 version'};
             t3 =uitable('Data',dat3,'ColumnName',cnames3,'RowName',rnames3);
             %set(t,'ColumnWidth',{100});
             
@@ -974,7 +994,7 @@ for ch = 1:chans
     
     
 end % channel loop
-if isstruct(IR)
+if isstruct(IR) && doplot >= 0
     mf = [0.63,0.8,1,1.25,1.6,2,2.5,3.15,4,5,6.3,8,10,12.5];
     doresultleaf(MTF,'Modulation transfer ratio',{'Modulation_frequency'},...
                  'Modulation_frequency', num2cell(mf),                                'Hz',          true,...
@@ -1030,6 +1050,7 @@ Verbose.Lnoise = Lnoise;
 Verbose.M_STI0 = M_STI0;
 Verbose.F_STI0 = F_STI0;
 Verbose.STIPA0 = STIPA0;
+Verbose.STI_1985 = STI_1985;
 Verbose.MTI0 = MTI0;
 Verbose.MTF0 = MTF0;
 
@@ -1102,7 +1123,7 @@ if doAuralization
     
     % Filter convolved speech into octave bands
     S_octave = zeros(outputlength,AuralizeChans,7); % pre-allocate
-    for k=1:length(fc);
+    for k=1:length(fc)
         S_octave(:,:,k)=filter(b(:,k),a(:,k), auralization); % filter
     end
     
@@ -1146,7 +1167,7 @@ if doAuralization
     
     % Filter the noise into octave bands
     N_octave = zeros(outputlength,AuralizeChans,7); % pre-allocate
-    for k=1:length(fc);
+    for k=1:length(fc)
         N_octave(:,:,k)=filter(b(:,k),a(:,k), PinkNoise); % filter
     end
     
@@ -1284,7 +1305,7 @@ end % eof
 
 
 %***************************************************************
-function [M_STI, F_STI, STIPA, MTI] = CalculateSTI(MTF)
+function [M_STI, F_STI, STIPA, MTI, STI_1985] = CalculateSTI(MTF)
 % calculate STI values and modulation transfer indices
 % from a modulation transfer function matrix
 
@@ -1295,7 +1316,13 @@ SNReff=10*log10(MTF./(1-MTF));
 SNReff(SNReff>15)=15;
 SNReff(SNReff<-15)=-15;
 
-% Calculate Transmission Index (TI)
+% Houtgast 1985
+SNmean = mean(SNReff,1);
+wk = [0.13,0.14,0.11,0.12,0.19,0.17,0.14];
+SNmean = sum(SNmean.*wk);
+STI_1985 = (SNmean+15)./30;
+
+% Calculate Transmission Index (TI) - 2003 & 2011
 % and averaged Modulation Tranasfer Index (MTI)
 TI=(SNReff+15)./30;
 MTI=mean(TI,1);
@@ -1332,6 +1359,10 @@ MTI_beta=beta.*sqrt(MTI_STIPA(1:length(beta)) ...
     .*MTI_STIPA(2:length(beta)+1));
 STIPA=sum(MTI_alpha)-sum(MTI_beta);
 
+% % STI 1985 version
+% wk = [0.13 0.14 0.11 0.12 0.19 0.17 0.14];
+% STI_1985 = (sum(wk.* MTI) + 15)/30;
+% disp(num2str(STI_1985))
 end % eof
 
 
