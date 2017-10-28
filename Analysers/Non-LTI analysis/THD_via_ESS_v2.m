@@ -122,7 +122,7 @@ else
     peakind = zeros(size(IR,2),size(IR,4));
     for ch = 1:size(IR,2)
         for d4 = 1:size(IR,4)
-            peakind(ch,d4) = find(max(IR(:,ch,1,d4).^2==IR(:,ch,1,d4).^2));
+            peakind(ch,d4) = find(max(IR(:,ch,1,d4).^2)==IR(:,ch,1,d4).^2);
         end
     end
 end
