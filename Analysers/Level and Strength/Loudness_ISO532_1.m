@@ -308,22 +308,28 @@ ThirdOctaveLevel = zeros(NumSamplesLevel,28);
 
 if method == 1
     for i = 1:28
+            % freq dependent time constant
             if CenterFrequency(i) <= 1000
                 Tau = 2/(3*CenterFrequency(i));
             else
                 Tau = 2/(3*1000.);
             end
-
+        
             % 3x smoothing 1st order low-pass filters in series
             A1 = exp(-1 ./ (fs * Tau));
             B0 = 1 - A1;
-        smoothedaudio(:,i)= filter(B0,A1,...
-            filter(B0,A1,...
-            filter(B0,A1,filteredaudio(:,i))));
+            Y1 = 0;
+            for k = 1:3
+                for j = 1:length(filteredaudio)
+                    smoothedaudio(j,i)= (B0*filteredaudio(j,i))+(A1*Y1);
+                    Y1 = smoothedaudio(j,i);
+                end
+            end
+
     end
 
     for i = 1:28
-        soomthedaudioDecimated = decimate(filteredaudio(:,i),DecFactorLevel/6,12);
+        soomthedaudioDecimated = decimate(smoothedaudio(:,i),DecFactorLevel/6,12);
         soomthedaudioDecimated = decimate(soomthedaudioDecimated,DecFactorLevel/4,12);
         ThirdOctaveLevel(:,i) = real(10*log10(soomthedaudioDecimated+TINY_VALUE/I_REF));
     end
@@ -428,7 +434,7 @@ for j = 1:NumSamplesLevel
             Le(j,i) = LCB(j,i);
         end
         Le(j,i) = Le(j,i) - A0(i);
-        if field == 1;
+        if field == 1
             Le(j,i) = Le(j,i) + DDF(i);
         end
         if Le(j,i) > LTQ(i)
@@ -436,6 +442,7 @@ for j = 1:NumSamplesLevel
             Le(j,i) = Le(j,i) - DCB(i);
             MP1 = 0.0635 * 10.^(0.025 * LTQ(i));
             MP2 = (1. - S + S*10^(0.1*(Le(j,i)-LTQ(i))))^0.25 - 1.;
+%             MP2 = ((1. - S + S*(10^(0.1*Le(j,i)-LTQ(i))))^0.25)-1.;
             CoreL(j,i) = MP1 * MP2;
             if CoreL(j,i) <= 0
                 CoreL(j,i) = 0;
@@ -451,8 +458,9 @@ end
 
 for j = 1:NumSamplesLevel
         CorrCL = 0.4 + 0.32 * CoreL(j,1)^.2;
-        if CorrCL > 1; CorrCL = 1; end 
-        CoreL(j,1) = CoreL(j,1)*CorrCL; 
+        if CorrCL < 1; CoreL(j,1) = CoreL(j,1)*CorrCL; end
+%         if CorrCL > 1; CorrCL = 1; end 
+%         CoreL(j,1) = CoreL(j,1)*CorrCL; 
 end
 
 
@@ -462,7 +470,7 @@ end
 
 if method == 1
 
-    DeltaT = 1 / fs*NL_ITER;
+    DeltaT = 1 / SampleRateLevel; % fs %*NL_ITER;
     P = (Tvar + Tlong) / (Tvar*Tshort);
     Q = 1/(Tshort*Tvar);
     Lambda1 =-P/2 + sqrt(P*P/4 - Q);
@@ -634,28 +642,28 @@ for l = 1:NumSamplesLevel
 
     % Determines where to start on the slope
        ig = i-1;
-       if ig >7;
+       if ig >7
            ig=7;
        end
        control=1;
        while (z1 < ZUP(i)) || (control==1) % ZUP is the upper limit of the approximated critical band
 
     % Determines which of the slopes to use
-          if n1 < CoreL(l,i),      % Nm is the main loudness level
+          if n1 < CoreL(l,i)      % Nm is the main loudness level
              j=1;
-             while RNS(j) > CoreL(l,i), % the value of j is used below to build a slope
+             while RNS(j) > CoreL(l,i) % the value of j is used below to build a slope
                 j=j+1; % j becomes the index at which Nm(i) is first greater than RNS
              end 
           end
 
     % The flat portions of the loudness graph
-         if n1 <= CoreL(l,i),
+         if n1 <= CoreL(l,i)
              z2 = ZUP(i); % z2 becomes the upper limit of the critical band
              n2 = CoreL(l,i);
              N = N + n2*(z2-z1); % Sums the output (N_entire)
              for k = z:0.1:z2      % k goes from z to upper limit of the critical band in steps of 0.1
                 ns(l,iz) = n2; % ns is the output, and equals the value of Nm
-                if k < (z2-0.05), 
+                if k < (z2-0.05) 
                    iz = iz + 1;
                 end
              end
@@ -664,18 +672,18 @@ for l = 1:NumSamplesLevel
          end
 
     % The sloped portions of the loudness graph
-          if n1 > CoreL(l,i),
+          if n1 > CoreL(l,i)
               n2 = RNS(j);
-              if n2 < CoreL(l,i);
+              if n2 < CoreL(l,i)
                   n2 = CoreL(l,i);
               end
               dz = (n1-n2)/USL(j,ig); % USL = slopes
               dz = round(dz*10)*0.1;
-              if dz == 0;
+              if dz == 0
                   dz = 0.1;
               end
               z2 = z1 + dz;
-              if z2 > ZUP(i),
+              if z2 > ZUP(i)
                  z2 = ZUP(i);
                  dz = z2-z1;
                  n2 = n1 - dz*USL(j,ig); %USL = slopes
@@ -683,17 +691,17 @@ for l = 1:NumSamplesLevel
               N = N + dz*(n1+n2)/2; % Sums the output (N_entire)
               for k = z:0.1:z2
                 ns(l,iz) = n1 - (k-z1)*USL(j,ig); % ns is the output, USL = slopes
-                if k < (z2-0.05),
+                if k < (z2-0.05)
                    iz = iz + 1;
                 end
               end
               z = k;
               z = round(z*10)*0.1;
           end
-           if n2 == RNS(j);
+           if n2 == RNS(j)
                j=j+1;
            end
-           if j > 18;
+           if j > 18
                j = 18;
            end
        n1 = n2;
@@ -703,11 +711,11 @@ for l = 1:NumSamplesLevel
        end
     end
 
-    if N < 0;
+    if N < 0
         N = 0;
     end
 
-    if N <= 16;
+    if N <= 16
         N = (N*1000+.5)/1000;
     else
         N = (N*100+.5)/100;
@@ -715,11 +723,11 @@ for l = 1:NumSamplesLevel
 
     LN(l) = 40*(N + .0005)^.35;
 
-    if LN(l) < 3;
+    if LN(l) < 3
         LN(l) = 3;
     end
 
-    if N >= 1;
+    if N >= 1
         LN(l) = 10*log10(N)/log10(2) + 40;
     end
 
@@ -746,6 +754,7 @@ if method == 1
     A1 = exp(-1 / (SampleRateLevel * DecFactorLevel * Tau));
     B0 = 1 - A1;
     Y1 = 0;
+        
     for i = 1:NumSamplesLevel
         X0 = N_mat(i);
         Y1 = B0 * X0 + A1 * Y1;
