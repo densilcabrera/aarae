@@ -319,7 +319,7 @@ if method == 1
             A1 = exp(-1 ./ (fs * Tau));
             B0 = 1 - A1;
             Y1 = 0;
-            for jj = 1:3
+            for k = 1:3
                 for j = 1:length(filteredaudio)
                     smoothedaudio(j,i)= (B0*filteredaudio(j,i))+(A1*Y1);
                     Y1 = smoothedaudio(j,i);
