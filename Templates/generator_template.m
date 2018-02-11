@@ -1,31 +1,48 @@
-function [OUT, varargout] = OctSpacedSweep(durfinal,fs,reverse,rcos_ms,hannexp)
-% This function generates an octave-spaced sweep, essentially following the
-% concept of the Shepard-Risset glissando
+function [OUT, varargout] = generator_template(input_1, input_2)
+% This function can be used as a template for adapting your audio
+% generating functions to work in the AARAE environment.
 %
-% The main aim of this is to demonstrate the chroma vs pitch-height
-% distinction, or just for fun
+% AARAE generators require that the output of this function is given in the
+% form of a structure type variable. You may use 'OUT' as the name of your
+% output structure. You can design your function to take as many input
+% arguments as you require, but usually, since AARAE doesn't allow to input
+% parameters as if you were executing the function from MATLAB's Command
+% Window, these parameters are requested upon the functions' call in AARAE
+% through an input dialog window (See MATLAB help inputdlg). Nonetheless,
+% it's useful to declare the input arguments if you'd like your function to
+% be useful as a standalone function in MATLAB.
+%
+% You can also use these first few lines to write a brief description of
+% what your function does. This will be displayed as a tooltip when the
+% user hoovers the mouse over the box where your function is displayed in
+% AARAE
+%
+% The next few lines show an example on how you may use MATLAB's built-in
+% inputdlg function to allow the user to type in the input arguments your
+% function requires to work.
 
-if nargin == 0 
+if nargin == 0 % If the function is called within the AARAE environment it
+    % won't have any input arguments, this is when the inputdlg
+    % function becomes useful.
     
-    param = inputdlg({'Waveform duration (s)';... % These are the input box titles in the
-        'Time per octave (s)';...
-        'Sampling rate (Hz)';
-        'Ascending [0] or descending [1] sweep';
-        'Fade-in and fade-out duration';
-        'Hann window exponent'},...
-        'Octave Spaced Sweep',... % This is the dialog window title.
-        [1 60],... 
-        {'60';'10';'48000';'0';'15';'1'}); % defaults
+    param = inputdlg({'Input 1';... % These are the input box titles in the
+        'Input 2'},...% inputdlg window.
+        'Window title',... % This is the dialog window title.
+        [1 60],... % You can define the number of rows per
+        ...        % input box and the number of character
+        ...        % spaces that each box can display at once
+        ...        % per row.
+        {'1';'48000'}); % And the default answers for your dialog.
     
-    param = str2num(char(param));  
-    if length(param) < 5, param = []; end 
-    if ~isempty(param) 
-        durfinal = param(1);
-        octdur = param(2);
-        fs = param(3);
-        reverse = param(4);
-        rcos_ms = param(5);
-        hannexp = param(6);
+    param = str2num(char(param)); % Since inputs are usually numbers it's a
+    % good idea to turn strings into numbers.
+    
+    if length(param) < 2, param = []; end % You should check that the user
+    % has input all the required fields.
+    if ~isempty(param) % If they have, you can then assign the dialog's
+        % inputs to your function's input parameters.
+        input_1 = param(1);
+        input_2 = param(2);
     else
         % get out of here if the user presses 'cancel'
         OUT = [];
@@ -36,67 +53,64 @@ else
 end
 
 
-
-
-if ~isempty(param) || nargin ~= 0
+% Normally generators do not have audio inputs. If you wish to make a
+% generator that has audio input, first think about whether it would be
+% better classified as a processor. If it is really best as a generator,
+% then audio can be input using AARAE's choose_audio function.
+% If you wish to do the same with this function outside
+% the AARAE environment (as a stand-alone), then it might be easiest to
+% have the input audio as an input argument to the function.
+if false % change to true if you wish to enable the following
     
-
-
-    noct = 10; % number of octaves
-    dur = octdur*noct;
-    octlen = round(fs*octdur); 
-    end_freq = fs/2;
-    start_freq = end_freq / 2^noct;
-    SI = 1/fs;
-    ampl = 0.1;
-    
-    w1 = 2*pi*start_freq; w2 = 2*pi*end_freq;
-    K = (dur*w1)/(log(w2/w1));
-    L = log(w2/w1)/dur;
-    t = (0:round(dur/SI)-1)*SI;
-    phi = K*(exp(t*L) - 1);
-    freq = K*L*exp(t*L);
-    S = (ampl*sin(phi))';
-    
-    S = S .* hann(length(S)).^hannexp;
-    Smix = S;
-    for n = 1:noct-1
-        Smix = Smix + circshift(S,n*octlen);
+    % Use a menu & dialog box to select a wav file or audio within AARAE
+    selection = choose_audio; % call AARAE's choose_audio function
+    if ~isempty(selection)
+        audio = selection.audio; % audio data
+        fs = selection.fs; % sampling rate
+        [len, chans, bands] = size(audio); % input audio dimensions
     end
-    
-    numcat = ceil(durfinal./(length(Smix)/fs));
-    if numcat > 1
-        Smix = repmat(Smix,[numcat 1]);
-    end
-    Smix = Smix(1:floor(durfinal*fs));
-    
-    rcos_len = round(length(S)*((rcos_ms*1e-3)/dur));
-    rcoswin = hann(2*rcos_len);
-    
-    OUT.audio = audio; % You NEED to provide the audio you generated.
-    %OUT.audio2 = ?;     You may provide additional audio derived from your function.
-    OUT.fs = fs;       % You NEED to provide the sampling frequency of your audio.
-    %OUT.tag = tag;      You may assign it a name to be identified in AARAE.
-    %OUT.properties.prop1 = prop1;
-    %OUT.properties.prop2 = prop2; You may provide additional info
-    %OUT.properties.prop3 = prop3; about your generated signal in
-    %                              a structure type field called
-    %                              .properties
-    OUT.funcallback.name = 'generator_template.m'; % Provide AARAE
-    % with the name of your function
-    OUT.funcallback.inarg = {input_1,input_2}; % assign all of the
-    % input parameters that could be used to call the function
-    % without dialog box to the output field param (as a cell
-    % array).
-    
-    
-    
-else
-    % AARAE requires that in case that the user doesn't input enough
-    % arguments to generate audio to output an empty variable.
-    OUT = [];
 end
+    
+    % To make your function work as standalone you can check that the user has
+    % either entered some parameters as inputs or that the inputs have been
+    % acquired through the input dialog window.
+    if ~isempty(param) || nargin ~= 0
+        % If there are some input parameters to work with then your code can be
+        % executed! You may copy and paste some code you've written or write
+        % something new in the lines below, such as:
+        
+        t = linspace(0,input_1,input_2*input_1);
+        audio = cos(2*pi*1000.*t');
+        fs = input_2;
+        
+        % And once you have your result, you should set it up in an output form
+        % that AARAE can understand.
+        
+        
+        OUT.audio = audio; % You NEED to provide the audio you generated.
+        %OUT.audio2 = ?;     You may provide additional audio derived from your function.
+        OUT.fs = fs;       % You NEED to provide the sampling frequency of your audio.
+        %OUT.tag = tag;      You may assign it a name to be identified in AARAE.
+        %OUT.properties.prop1 = prop1;
+        %OUT.properties.prop2 = prop2; You may provide additional info
+        %OUT.properties.prop3 = prop3; about your generated signal in
+        %                              a structure type field called
+        %                              .properties
+        OUT.funcallback.name = 'generator_template.m'; % Provide AARAE
+        % with the name of your function
+        OUT.funcallback.inarg = {input_1,input_2}; % assign all of the
+        % input parameters that could be used to call the function
+        % without dialog box to the output field param (as a cell
+        % array).
 
+        
+
+    else
+        % AARAE requires that in case that the user doesn't input enough
+        % arguments to generate audio to output an empty variable.
+        OUT = [];
+    end
+    
 end % End of function
 
 %**************************************************************************
