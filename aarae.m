@@ -1969,7 +1969,7 @@ switch method
                     end
                     if isfield(caldata,'history')
                         calhistory{1,4} = 'reference audio history below';
-                        calhistory = [calhistory,caldata.history]
+                        calhistory = [calhistory;caldata.history];
                     end
                 else
                     warndlg('Incompatible calibration file','Warning!');
