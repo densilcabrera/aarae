@@ -66,7 +66,7 @@ if abs(chans^0.5 - round(chans^0.5)) >1e-20
     return
 end
 
-maxtime = len/fs;
+maxtime = (len-2)/fs;
 if nargin < 12, domain = 0; end
 if nargin < 11, plottype = 1; end
 if nargin < 10, valtype = 40; end
@@ -74,7 +74,7 @@ if nargin < 9, smoothlen = round(4*fs/1000); end
 if nargin < 8, lof = 0; end
 if nargin < 7, hif = fs/2; end
 if nargin < 6, max_order=round(chans.^0.5-1); end
-if nargin < 5, 
+if nargin < 5 
     end_time = 0.1;
     if end_time > maxtime, end_time = maxtime; end
 end
@@ -182,11 +182,11 @@ numberofdirections = numel(azim_for_directplot);
 Y = SphericalHarmonicMatrix(hoaFmt,azim_for_directplot,elev_for_directplot);
 
 direct_sound_HOA = hoaSignals(start_sample:end_sample,:,:);
-len = length(direct_sound_HOA);
-beamsignals = zeros(length(direct_sound_HOA),numberofdirections,bands);
+len = size(direct_sound_HOA,1);
+beamsignals = zeros(len,numberofdirections,bands);
 
-for i = 1:chans;
-    for j = 1:numberofdirections;
+for i = 1:chans
+    for j = 1:numberofdirections
         for b = 1:bands
             beamsignals(:,j,b) = beamsignals(:,j,b)+(direct_sound_HOA(:,i,b).*Y(i,j));
         end
@@ -242,14 +242,14 @@ switch valtype
             end
         end
     case -1 % Schroeder reverse integration
-        beamsignals = 10*log10(flipdim(cumsum(flipdim(beamsignals,1).^2),1));
+        beamsignals = 10*log10(flip(cumsum(flip(beamsignals,1).^2),1));
         dBrange = 60;
         for b = 1:bands
             beamsignals(beamsignals(:,:,b) < max(max(beamsignals(:,:,b)))-dBrange)...
                 = max(max(beamsignals(:,:,b)))-dBrange;
         end
         case -2 % differenced Schroeder reverse integration
-        beamsignals = 10*log10(flipdim(cumsum(flipdim(beamsignals,1).^2),1));
+        beamsignals = 10*log10(flip(cumsum(flip(beamsignals,1).^2),1));
         dBrange = 60;
         for b = 1:bands
             beamsignals(beamsignals(:,:,b) < max(max(beamsignals(:,:,b)))-dBrange)...
