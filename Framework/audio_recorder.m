@@ -1039,7 +1039,7 @@ else
         end
     end
     if get(handles.cal_chk,'Value') == 1
-        handles.recording.cal = handles.syscalstats.cal(1:size(handles.recording.audio,2));
+        handles.recording.cal = handles.syscalstats.cal(handles.numchs);
         if isfield(handles.syscalstats, 'units')
             handles.recording.properties.units = handles.syscalstats.units;
             handles.recording.properties.units_ref = handles.syscalstats.units_ref;
