@@ -6517,7 +6517,7 @@ Xvalues = get(handles.Xvalues_sel,'SelectedObject');
 Xvalues = get(Xvalues,'tag');
 switch Xvalues
     case 'radiobutton1'
-        bar(handles. data,data.tables(ntable).Data(:,get(handles.Yvalues_box,'Value')),'FaceColor',[0 0.5 0.5])
+        bar(handles.axesdata,data.tables(ntable).Data(:,get(handles.Yvalues_box,'Value')),'FaceColor',[0 0.5 0.5])
         set(handles.axesdata,'Xtick',1:length(data.tables(ntable).RowName),'XTickLabel',data.tables(ntable).RowName)
     case 'radiobutton2'
         bar(handles.axesdata,data.tables(ntable).Data(get(handles.Yvalues_box,'Value'),:),'FaceColor',[0 0.5 0.5])
