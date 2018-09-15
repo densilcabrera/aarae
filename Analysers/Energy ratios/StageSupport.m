@@ -179,15 +179,18 @@ if ~isempty(IR) && ~isempty(fs) && ~isempty(startthresh) && ~isempty(bpo) && ~is
     Early20_100 = permute(sum(Early20_100.^2),[3,2,1]);
     Late100_200 = permute(sum(Late100_200.^2),[3,2,1]);
     Late100_1000 = permute(sum(Late100_1000.^2),[3,2,1]);
+    All20_1000 = permute(sum(All20_1000.^2),[3,2,1]);
 
     ST1 = 10*log10(Early20_100 ./ Direct10); 
     ST2 = 10*log10(Late100_200 ./ Direct10); 
-    STLate = 10*log10(Late100_1000 ./ Direct10); 
+    STLate = 10*log10(Late100_1000 ./ Direct10);
+    STAll = 10*log10(All20_1000 ./ Direct10);
 
     meanbands = find(bandfc>=200 & bandfc<=2500);
     ST1av = mean(ST1(meanbands,:),1);
     ST2av = mean(ST2(meanbands,:),1);
     STLateav = mean(STLate(meanbands,:),1);
+    STAllav = mean(STAll(meanbands,:),1);
 
 
     %--------------------------------------------------------------------------
@@ -226,16 +229,16 @@ if ~isempty(IR) && ~isempty(fs) && ~isempty(startthresh) && ~isempty(bpo) && ~is
         f = figure('Name',['Stage Support, channel: ', num2str(ch)], ...
             'Position',[200 200 620 360]);
         %[left bottom width height]
-        dat1 = [ST1(:,ch)';ST2(:,ch)';STLate(:,ch)'];
+        dat1 = [ST1(:,ch)';ST2(:,ch)';STLate(:,ch)';STAll(:,ch)'];
         cnames1 = num2cell(bandfc);
-        rnames1 = {'ST1 or ST Early (dB)', 'ST2 (dB)', 'ST Late (dB)'};
+        rnames1 = {'ST1 or ST Early (dB)', 'ST2 (dB)', 'ST Late (dB)', 'ST All (dB)'};
         t1 =uitable('Data',dat1,'ColumnName',cnames1,'RowName',rnames1);
         set(t1,'ColumnWidth',{60});
         
-        dat2 = [ST1av(:,ch)';ST2av(:,ch)';STLateav(:,ch)'];
+        dat2 = [ST1av(:,ch)';ST2av(:,ch)';STLateav(:,ch)';STAllav(:,ch)'];
         cnames2 = {'Spectral Average (250 Hz - 2kHz Octave Bands)'};
         rnames2 = {'ST1 or ST Early (dB)','ST2 (dB)', ...
-            'ST Late (dB)'};
+            'ST Late (dB)', 'ST All (dB)'};
         t2 =uitable('Data',dat2,'ColumnName',cnames2,'RowName',rnames2);
         
         [~,tables] = disptables(f,[t2 t1],{['Chan' num2str(ch) ' - Spectral average'],['Chan' num2str(ch) ' - Stage support']});
