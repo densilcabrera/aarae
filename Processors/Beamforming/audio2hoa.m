@@ -1,4 +1,4 @@
-function OUT = audio2hoa(IN, fs, mic_coords, cropIR , max_order,filterlength)
+function OUT = audio2hoa(IN, fs, mic_coords, cropIR , max_order,filterlength, micType)
 % This function reduces raw recordings made from a spherical microphone
 % array to higher order Ambisonics (HOA) format, to allow them to be used
 % and analysed with processors and analysers that use this generic spatial
@@ -15,6 +15,7 @@ function OUT = audio2hoa(IN, fs, mic_coords, cropIR , max_order,filterlength)
 % Code by Daniel Jimenez, Luis Miranda and Densil Cabrera
 % Version 1.0 (19 August 2014)
 
+if nargin < 7, micType = 'omni'; end
 if nargin < 6, filterlength = 256; end
 if nargin < 5, max_order = 4; end
 if nargin < 4, cropIR = 0; end
@@ -23,16 +24,23 @@ if isstruct(IN)
     audio = IN.audio;
     fs = IN.fs;
     if nargin < 4
-        param = inputdlg({'Maximum order','Apply autocropstart_aarae.m','Filter length (in samples)'},...
+        param = inputdlg({'Maximum order','Apply autocropstart_aarae.m','Filter length (in samples)','Mic Type'},...
                        'Input parameters',1,...
-                      {num2str(max_order),num2str(cropIR),num2str(filterlength)});
-        if isempty(param) || isempty(param{1,1}) || isempty(param{2,1}) || isempty(param{3,1})
+                      {num2str(max_order),num2str(cropIR),num2str(filterlength),micType});
+        if isempty(param) || isempty(param{1,1}) || isempty(param{2,1}) || isempty(param{3,1}) || isempty(param{4,1})
             OUT = [];
             return;
         else
             max_order = str2double(param{1,1});
             cropIR = str2double(param{2,1});
             filterlength = str2double(param{3,1});
+            switch param{4,1}
+                    case {'omni','cardio','super', ...
+                            'hyper','eight','measured'}
+                        micType = param{4,1};
+                    otherwise
+                        error('Unknown microphone type') ;
+            end       
             if isnan(max_order) || isnan(cropIR) || isnan(filterlength), OUT = []; return; end
         end
     end
@@ -100,7 +108,7 @@ if size(mic_coords,2) ~= 3;
     warndlg('Mic coordinates are three columns with spherical coordinates','AARAE info','modal'); OUT = []; return;
 end
 
-micFmt = GenerateMicFmt({'sphCoord',mic_coords,'micType','omni'});
+micFmt = GenerateMicFmt({'sphCoord',mic_coords,'micType',micType});
 
 % Check that max_order is not impossibly big
 if (max_order+1)^2 > size(audio,2)
@@ -152,7 +160,7 @@ if isstruct(IN)
     %OUT.chanID = cellstr([repmat('Y ',[size(OUT.audio,2),1]),num2str(hoaFmt.index)]);
     OUT.chanID = makechanID(size(OUT.audio,2),1); %using an aarae utility function
     OUT.funcallback.name = 'audio2hoa.m';
-    OUT.funcallback.inarg = {fs, mic_coords, cropIR, max_order,filterlength};
+    OUT.funcallback.inarg = {fs, mic_coords, cropIR, max_order,filterlength, micType};
 else
     OUT = hoaSignals;
 end
