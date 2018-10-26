@@ -1282,7 +1282,7 @@ for nleafs = 1:length(selectedNodes)
                         end
                     end
                     if strcmp(ext,'.mat'), save([folder_name '/' name{1,1} ext],'audiodata','-v7.3'); end
-                    if strcmp(ext,'.wav'), audiowrite([folder_name '/' name{1,1} ext],audiodata.audio,audiodata.fs); end
+                    if strcmp(ext,'.wav'), audiowrite([folder_name '/' name{1,1} ext],audiodata.audio,audiodata.fs,'BitsPerSample',24); end
                 else
                     index = 1;
                     % This while cycle is just to make sure no signals are
@@ -1303,7 +1303,7 @@ for nleafs = 1:length(selectedNodes)
                         end
                     end
                     if strcmp(ext,'.mat'), save([folder_name '/' name{1,1} ext],'audiodata','-v7.3'); end
-                    if strcmp(ext,'.wav'), audiowrite(audiodata.audio,audiodata.fs,[folder_name '/' name{1,1}]); end
+                    if strcmp(ext,'.wav'), audiowrite(audiodata.audio,audiodata.fs,'BitsPerSample',24,[folder_name '/' name{1,1}]); end
                 end
                 %current = cd;
                 fprintf(handles.fid, ['%% ' datestr(now,16) ' - Saved "' char(selectedNodes(nleafs).getName) '" to file "' name{1,1} ext '" in folder "%s"' '\n'],folder_name);
