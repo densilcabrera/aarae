@@ -1,4 +1,4 @@
-function [OUT, varargout] = AdjustIR_RT(IN,T,freq,iterations,autocrop,openclosed,Tevalrange,filterstrength,fs)
+function [OUT, varargout] = AdjustIR_RT(IN,T,freq,iterations,autocrop,openclosed,Tevalrange,filterstrength,AbsRelT,GuideChan,fs)
 % This function is designed to change the reverberation time of an impulse
 % response (probably a room impulse response) to desired target band values
 % using octave or 1/3-octave band processing (or other bandwidths if the
@@ -9,6 +9,8 @@ function [OUT, varargout] = AdjustIR_RT(IN,T,freq,iterations,autocrop,openclosed
 % responses: Techniques for auralization and sonification," Proceedings of
 % Acoustics 2011 (Australian Acoustical Society Conference), Gold Coast,
 % Australia, 2011.
+%
+% IMPORTANT: This function requires Matlab's Curve Fitting Toolbox.
 %
 %
 % INPUTS: 
@@ -65,7 +67,10 @@ function [OUT, varargout] = AdjustIR_RT(IN,T,freq,iterations,autocrop,openclosed
 % time is short, then the filters' own impulse response may introduce
 % unwanted artefacts if the filterstrength is too great.
 %
-%
+% AbsRelT allows the target reverberation times to be specified either in
+% absolute terms (reverberation time in seconds) or in relative terms (as a
+% factor change in reverberation time relative to the original). Use 0 for
+% absolute; use 1 for relative.
 %
 % This version does filtering in the frequency domain (whereas the version
 % described in the paper did time domain filtering). The frequency domain
@@ -79,7 +84,10 @@ function [OUT, varargout] = AdjustIR_RT(IN,T,freq,iterations,autocrop,openclosed
 % especially if reverberation time is being increased. While this function
 % does include noise-floor extrapolation, it is best not to rely on that
 % for important parts of the impulse response. Some experimentation may be
-% required to achieve useful results.
+% required to achieve useful results. If possible, use a high bit depth
+% (e.g. 64 bit, rather than 16-bit) for the IR (this will always be the
+% case if the IR is measured in AARAE, but may not be the case for imported
+% IRs) - this should avoid some occasional curve-fitting issues.
 %
 % The reverberation times displayed by this function are indicative -
 % please check the results with a more comprehensive reverberation time
@@ -88,7 +96,15 @@ function [OUT, varargout] = AdjustIR_RT(IN,T,freq,iterations,autocrop,openclosed
 % differences from the expected values.
 %
 % Code by Densil Cabrera
-% version 1, 2 June 2015
+% version 2, 9 Sept 2019
+
+v = ver('curvefit');
+if isempty(v)
+    h=warndlg('This function requires Matlab''s Curve Fitting Toolbox.','AARAE info','modal');
+        uiwait(h)
+        OUT = []; % you need to return an empty output
+        return % get out of here!
+end
 
 if nargin == 1
     if size(IN.audio,3)==1 % if audio is multiband already, then we don't have to filter
@@ -99,14 +115,16 @@ if nargin == 1
             'Auto-crop start? [0 | 1]';...
             'Open [0] or closed [1] end filters at the extremes';...
             'Reverberation time evaluation range (dB)';...
+            'Absolute or relative reverberation time adjustment [0 | 1]';...
+            'Guide channels [0 for all, or specify channel(s)]';...
             'Filter strength factor'},...
             'Reverberation Time Adjustment Settings',... % dialog window title.
             [1 60],...
-            {'1';'8000';'125';'4';'1';'0';'20';'2'}); % preset answers.
+            {'1';'8000';'125';'4';'1';'0';'20';'0';'0';'2'}); % preset answers.
         
         param = str2num(char(param));
         
-        if length(param) < 8, param = []; end 
+        if length(param) < 10, param = []; end 
         if ~isempty(param) 
             bandwidths = param(1);
             fhigh = param(2);
@@ -115,7 +133,9 @@ if nargin == 1
             autocrop = param(5);
             openclosed = param(6);
             Tevalrange = abs(param(7));
-            filterstrength = param(8);
+            AbsRelT = abs(param(8));
+            GuideChan = param(9);
+            filterstrength = param(10);
             noctaves = log2(fhigh/flow); % number of octaves
             if bandwidths == 1
                 % octave bands
@@ -141,12 +161,12 @@ if nargin == 1
         
         param = inputdlg({'Number of iterations';...
             'Auto-crop start? [0 | 1]';...
-            'Open [0] or closed [1] end filters at the extremes';...
             'Reverberation time evaluation range (dB)';...
-            'Filter strength factor'},...
+            'Absolute or relative reverberation time adjustment [0 | 1]';...
+            'Guide channels [0 for all, or specify channel(s)]';},...
             'Reverberation Time Adjustment Settings',... % dialog window title.
             [1 60],...
-            {'4';'1';'0';'20'}); % preset answers.
+            {'4';'1';'20';'0';'0'}); % preset answers.
         
         param = str2num(char(param));
         
@@ -155,9 +175,9 @@ if nargin == 1
             
             iterations = param(1);
             autocrop = param(2);
-            openclosed = param(3);
-            Tevalrange = abs(param(4));
-            filterstrength = param(5);
+            Tevalrange = abs(param(3));
+            AbsRelT = abs(param(4));
+            GuideChan = param(5);
         else
             % get out of here if the user presses 'cancel'
             OUT = [];
@@ -234,10 +254,17 @@ if ~exist('T','var')
         freqcell1 = freqcell;
         defaultcell1 = defaultcell;
     end
+    if ~AbsRelT
     param = inputdlg(freqcell1,...
         'Reverberation Times',... % dialog window title.
         [1 60],...
         defaultcell1); % preset answers for dialog.
+    else
+        param = inputdlg(freqcell1,...
+        'Reverb Change Factor',... % dialog window title.
+        [1 60],...
+        defaultcell1); % preset answers for dialog.
+    end
     
     param = str2num(char(param));
     
@@ -250,11 +277,17 @@ if ~exist('T','var')
         end
     end
     if bands>=maxfield
+        if ~AbsRelT
         param = inputdlg(freqcell2,...
             'Reverberation Times',... % dialog window title.
             [1 60],...
             defaultcell2); % preset answers for dialog.
-        
+        else
+            param = inputdlg(freqcell2,...
+            'Reverb Change Factor',... % dialog window title.
+            [1 60],...
+            defaultcell2); % preset answers for dialog.
+        end
         param = str2num(char(param));
         
         if length(param) < (bands-maxfield), param = []; end
@@ -263,11 +296,17 @@ if ~exist('T','var')
         end
     end
     if bands>=2*maxfield
+        if ~AbsRelT
         param = inputdlg(freqcell3,...
             'Reverberation Times',... % dialog window title.
             [1 60],...
             defaultcell3); % preset answers for dialog.
-        
+        else
+            param = inputdlg(freqcell3,...
+            'Reverb Change Factor',... % dialog window title.
+            [1 60],...
+            defaultcell3); % preset answers for dialog.
+        end
         param = str2num(char(param));
         
         if length(param) < (bands-2*maxfield), param = []; end
@@ -378,8 +417,13 @@ if ~isempty(audio) && ~isempty(fs) && ~isempty(T)
         x = Tevalrange;
         %Schroeder reverse integration
         for band = 1:bands
+            if GuideChan == 0
             decaycurve = flipud(10*log10(cumsum(flipud(...
                 mean(mean(mean(mean(audio(:,:,band,:,:,:),2),4),5),6).^2))+1e-300));
+            else
+                decaycurve = flipud(10*log10(cumsum(flipud(...
+                mean(mean(mean(mean(audio(:,GuideChan,band,:,:,:),2),4),5),6).^2))+1e-300));
+            end
             % make IR start time 0 dB
             decaycurve = decaycurve - decaycurve(1);
             
@@ -387,6 +431,9 @@ if ~isempty(audio) && ~isempty(fs) && ~isempty(T)
             Tend = find(decaycurve <= -x-5, 1, 'first'); % -x-5 dB
             p = polyfit((Tstart:Tend)', decaycurve(Tstart:Tend),1); %linear regression
             RT(band) = 60/x*((p(2)-x-5)/p(1) - (p(2)-5)/p(1))/fs; % reverberation time
+        end
+        if AbsRelT && i==1
+            T = T.*RT;
         end
         %if i ==1, disp(['T20            (s)  ', num2str(RT)]); end
         tabledata(i,:) = RT;
@@ -406,8 +453,13 @@ if ~isempty(audio) && ~isempty(fs) && ~isempty(T)
     %Schroeder reverse integration
     for band = 1:bands
         %decaycurve = flipud(10*log10(cumsum(flipud(RIRoct(:,band).^2))+1e-300));
-        decaycurve = flipud(10*log10(cumsum(flipud(...
+        if GuideChan == 0
+            decaycurve = flipud(10*log10(cumsum(flipud(...
                 mean(mean(mean(mean(audio(:,:,band,:,:,:),2),4),5),6).^2))+1e-300));
+        else
+            decaycurve = flipud(10*log10(cumsum(flipud(...
+                mean(mean(mean(mean(audio(:,GuideChan,band,:,:,:),2),4),5),6).^2))+1e-300));
+        end
         % make IR start time 0 dB
         decaycurve = decaycurve - decaycurve(1);
         Tstart = find(decaycurve <= -5, 1, 'first'); % -5 dB
@@ -433,7 +485,7 @@ if ~isempty(audio) && ~isempty(fs) && ~isempty(T)
         % current version of AARAE it will result in the audio field being
         % empty
         OUT.funcallback.name = 'AdjustIR_RT.m';
-        OUT.funcallback.inarg = {T,freq,iterations,autocrop,openclosed,Tevalrange,filterstrength,fs};
+        OUT.funcallback.inarg = {T,freq,iterations,autocrop,openclosed,Tevalrange,filterstrength,AbsRelT,GuideChan,fs};
     else
         OUT = sum(audio,3);
     end
