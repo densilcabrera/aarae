@@ -17,7 +17,7 @@ function out = LateralFractions(data,fs,startthresh,threshmethod,bpo,omniweight,
 % bpo is bands per octave (1 for octave band, 3 for 1/3-octave band)
 %
 % omniweight is the relative weight of the zeroth vs 1st order channels
-% (e.g. chan 1 may have -2.4 dB sensitivity relative to on-axis chans 2-4).
+% (e.g. chan 1 may have -4.8 dB sensitivity relative to on-axis chans 2-4).
 % This depends on the Ambisonics encoding format.
 %
 % doplot is used to choose whether a chart is generated or not
@@ -25,7 +25,7 @@ function out = LateralFractions(data,fs,startthresh,threshmethod,bpo,omniweight,
 
 
 if nargin < 6, doplot = 1; end
-if nargin < 5, omniweight = -2.4; end
+if nargin < 5, omniweight = -4.8; end
 if nargin < 4, bpo = 1; end
 if nargin < 3
     startthresh = -20;
