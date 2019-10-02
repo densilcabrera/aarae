@@ -37,7 +37,7 @@ if nargin < 3
         'Plot (0|1)'};
     dlg_title = 'Settings';
     num_lines = 1;
-    def = {num2str(startthresh),'0','1','-2.4','1'};
+    def = {num2str(startthresh),'0','1','-4.8','1'};
     answer = inputdlg(prompt,dlg_title,num_lines,def);
     
     if ~isempty(answer)
