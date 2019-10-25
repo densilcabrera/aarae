@@ -89,16 +89,18 @@ try
         datatype = 4;
         OUT.datatype = datatypefield(datatype);
     end
-    if isfield(OUT,'tables')
-        % tables are present
-        if isfield(OUT,'audio')
-            % remove the audio field so that the tables are available in
-            % the GUI
-            OUT = rmfield(OUT,'audio');
-        end
-        datatype = 4;
-        OUT.datatype = datatypefield(datatype);
-    end
+    % the following lines are commented out to preserve the audio field if
+    % there are tables 26 Oct 2019
+%     if isfield(OUT,'tables')
+%         % tables are present
+%         if isfield(OUT,'audio')
+%             % remove the audio field so that the tables are available in
+%             % the GUI
+%             OUT = rmfield(OUT,'audio');
+%         end
+%         datatype = 4;
+%         OUT.datatype = datatypefield(datatype);
+%     end
     if ~isfield(OUT,'datatype')
         datatype = 1;
         OUT.datatype = datatypefield(datatype);
