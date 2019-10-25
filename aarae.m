@@ -4215,12 +4215,12 @@ for nleafs = 1:length(selectedNodes)
                 % remove audio and audio2 if there are tables (from
                 % AARAE_workflow_processor). Usually tables should
                 % only be created by analysers (not processors).
-                if isfield(newdata,'tables') && isfield(newdata,'audio')
-                    newdata = rmfield(newdata,'audio');
-                end
-                if isfield(newdata,'tables') && isfield(newdata,'audio2')
-                    newdata = rmfield(newdata,'audio2');
-                end
+%                 if isfield(newdata,'tables') && isfield(newdata,'audio')
+%                     newdata = rmfield(newdata,'audio');
+%                 end
+%                 if isfield(newdata,'tables') && isfield(newdata,'audio2')
+%                     newdata = rmfield(newdata,'audio2');
+%                 end
             else
                 % should not be necessary
                 newdata = signaldata;
