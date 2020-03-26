@@ -25,14 +25,14 @@ function mySelectFcn(tree, ~)
             set(mainHandles.compare_btn,'Enable','off')
         end 
         selectedNodes = selectedNodes(1);
-        audiodata = selectedNodes.handle.UserData;
-        if ~isempty(audiodata) && strcmp(audiodata.datatype,'syscal')
-            mainHandles.syscalstats = audiodata;
+        signaldata = selectedNodes.handle.UserData;
+        if ~isempty(signaldata) && strcmp(signaldata.datatype,'syscal')
+            mainHandles.syscalstats = signaldata;
             set(mainHandles.signaltypetext,'String',[selectedNodes.getName.char ' selected']);
         end
-        if ~isempty(audiodata) && isfield(audiodata,'audio')% If there's audio data saved in the leaf...
+        if ~isempty(signaldata) && isfield(signaldata,'audio')% If there's audio data saved in the leaf...
 
-%             Details = audiodata;
+%             Details = signaldata;
 %             if isfield(Details,'datatype'), Details = rmfield(Details,'datatype'); end
 %             if isfield(Details,'funcallback'), Details = rmfield(Details,'funcallback'); end
 %             if isfield(Details,'properties'), Details = rmfield(Details,'properties'); end %#ok : used in lines 30 and 31
@@ -40,48 +40,48 @@ function mySelectFcn(tree, ~)
 %             clear('Details')
 
             % method of getting audiodatatext (replaces code above)
-            audiodatatext = [char(10),' audio [',num2str(size(audiodata.audio,1)),'x',...
-                num2str(size(audiodata.audio,2)),'x',...
-                num2str(size(audiodata.audio,3)),'x',...
-                num2str(size(audiodata.audio,4)),'x',...
-                num2str(size(audiodata.audio,5)),'x',...
-                num2str(size(audiodata.audio,6)),']'];
-            if isfield(audiodata, 'audio2')
-                audiodatatext = [audiodatatext, char(10), ' audio2 [',num2str(size(audiodata.audio2,1)),'x',...
-                num2str(size(audiodata.audio2,2)),']'];
+            audiodatatext = [char(10),' audio [',num2str(size(signaldata.audio,1)),'x',...
+                num2str(size(signaldata.audio,2)),'x',...
+                num2str(size(signaldata.audio,3)),'x',...
+                num2str(size(signaldata.audio,4)),'x',...
+                num2str(size(signaldata.audio,5)),'x',...
+                num2str(size(signaldata.audio,6)),']'];
+            if isfield(signaldata, 'audio2')
+                audiodatatext = [audiodatatext, char(10), ' audio2 [',num2str(size(signaldata.audio2,1)),'x',...
+                num2str(size(signaldata.audio2,2)),']'];
             end
-            if isfield(audiodata, 'fs')
-                audiodatatext = [audiodatatext, char(10), ' fs ',num2str(audiodata.fs), ' Hz'];
+            if isfield(signaldata, 'fs')
+                audiodatatext = [audiodatatext, char(10), ' fs ',num2str(signaldata.fs), ' Hz'];
             end
-            if isfield(audiodata,'chanID')
-                if length(audiodata.chanID) == 1
-                    audiodatatext = [audiodatatext, char(10), ' chanID {', audiodata.chanID{1,1}, '}'];
-                elseif length(audiodata.chanID) == 2
-                    audiodatatext = [audiodatatext, char(10), ' chanID {', audiodata.chanID{1,1}, ';', audiodata.chanID{2,1}, '}'];
+            if isfield(signaldata,'chanID')
+                if length(signaldata.chanID) == 1
+                    audiodatatext = [audiodatatext, char(10), ' chanID {', signaldata.chanID{1,1}, '}'];
+                elseif length(signaldata.chanID) == 2
+                    audiodatatext = [audiodatatext, char(10), ' chanID {', signaldata.chanID{1,1}, ';', signaldata.chanID{2,1}, '}'];
                 else
-                    audiodatatext = [audiodatatext, char(10), ' chanID {', audiodata.chanID{1,1}, ';', audiodata.chanID{2,1}, '...}'];
+                    audiodatatext = [audiodatatext, char(10), ' chanID {', signaldata.chanID{1,1}, ';', signaldata.chanID{2,1}, '...}'];
                 end
             end
-            if isfield(audiodata,'bandID')
-                if length(audiodata.bandID) > 1
+            if isfield(signaldata,'bandID')
+                if length(signaldata.bandID) > 1
                 audiodatatext = [audiodatatext,char(10), ' bandID [',...
-                    num2str(min(audiodata.bandID)), ' to ',num2str(max(audiodata.bandID)) ']'];
+                    num2str(min(signaldata.bandID)), ' to ',num2str(max(signaldata.bandID)) ']'];
                 else
                     audiodatatext = [audiodatatext,char(10), ' bandID [',...
-                    num2str(audiodata.bandID), ']'];
+                    num2str(signaldata.bandID), ']'];
                 end
             end
-            if isfield(audiodata,'cal')
-                if length(audiodata.cal) == 1
-                    audiodatatext = [audiodatatext, char(10), ' cal ', num2str(audiodata.cal)];
-                elseif length(audiodata.cal) == 2
-                    audiodatatext = [audiodatatext, char(10), ' cal [', num2str(audiodata.cal(1)), ',', num2str(audiodata.cal(2)), ']'];
-                elseif length(audiodata.cal) == 3
-                    audiodatatext = [audiodatatext, char(10), ' cal [', num2str(audiodata.cal(1)), ';', num2str(audiodata.cal(2)), ';', num2str(audiodata.cal(3)), ']'];
-                elseif length(audiodata.cal) == 4
-                    audiodatatext = [audiodatatext, char(10), ' cal [', num2str(audiodata.cal(1)), ';', num2str(audiodata.cal(2)), ';', num2str(audiodata.cal(3)), ';', num2str(audiodata.cal(4)), ']'];
+            if isfield(signaldata,'cal')
+                if length(signaldata.cal) == 1
+                    audiodatatext = [audiodatatext, char(10), ' cal ', num2str(signaldata.cal)];
+                elseif length(signaldata.cal) == 2
+                    audiodatatext = [audiodatatext, char(10), ' cal [', num2str(signaldata.cal(1)), ',', num2str(signaldata.cal(2)), ']'];
+                elseif length(signaldata.cal) == 3
+                    audiodatatext = [audiodatatext, char(10), ' cal [', num2str(signaldata.cal(1)), ';', num2str(signaldata.cal(2)), ';', num2str(signaldata.cal(3)), ']'];
+                elseif length(signaldata.cal) == 4
+                    audiodatatext = [audiodatatext, char(10), ' cal [', num2str(signaldata.cal(1)), ';', num2str(signaldata.cal(2)), ';', num2str(signaldata.cal(3)), ';', num2str(signaldata.cal(4)), ']'];
                 else 
-                    audiodatatext = [audiodatatext, char(10), ' cal [', num2str(audiodata.cal(1)), ';', num2str(audiodata.cal(2)), ';', num2str(audiodata.cal(3)), ';', num2str(audiodata.cal(4)), '...]'];
+                    audiodatatext = [audiodatatext, char(10), ' cal [', num2str(signaldata.cal(1)), ';', num2str(signaldata.cal(2)), ';', num2str(signaldata.cal(3)), ';', num2str(signaldata.cal(4)), '...]'];
                 end
             end
             
@@ -91,7 +91,7 @@ function mySelectFcn(tree, ~)
             set(mainHandles.data_panel1,'Visible','off');
             set(mainHandles.data_panel2,'Visible','off'); 
             set(mainHandles.tools_panel,'Visible','on');
-            if ~strcmp(audiodata.datatype,'syscal')
+            if ~strcmp(signaldata.datatype,'syscal')
                 set([mainHandles.edit_btn mainHandles.cal_btn],'Enable','on');
             else
                 set(mainHandles.edit_btn,'Enable','on');
@@ -107,16 +107,16 @@ function mySelectFcn(tree, ~)
             set([mainHandles.To_time,mainHandles.To_freq],'String','0')
             mainHandles.To_time_IN = 0;
             mainHandles.To_freq_IN = 0;
-            if length(audiodata.audio) <= mainHandles.Settings.maxtimetodisplay*audiodata.fs
-                set([mainHandles.Tf_time,mainHandles.Tf_freq],'String',num2str(length(audiodata.audio)/audiodata.fs))
-                mainHandles.Tf_time_IN = length(audiodata.audio)/audiodata.fs;
-                mainHandles.Tf_freq_IN = length(audiodata.audio)/audiodata.fs;
+            if size(signaldata.audio,1) <= mainHandles.Settings.maxtimetodisplay*signaldata.fs
+                set([mainHandles.Tf_time,mainHandles.Tf_freq],'String',num2str(size(signaldata.audio,1)/signaldata.fs))
+                mainHandles.Tf_time_IN = size(signaldata.audio,1)/signaldata.fs;
+                mainHandles.Tf_freq_IN = size(signaldata.audio,1)/signaldata.fs;
             else
                 set([mainHandles.Tf_time,mainHandles.Tf_freq],'String',num2str(mainHandles.Settings.maxtimetodisplay))
                 mainHandles.Tf_time_IN = mainHandles.Settings.maxtimetodisplay;
                 mainHandles.Tf_freq_IN = mainHandles.Settings.maxtimetodisplay;
             end
-            set([mainHandles.text20,mainHandles.text21],'String',[num2str(length(audiodata.audio)/audiodata.fs) ' s'])
+            set([mainHandles.text20,mainHandles.text21],'String',[num2str(size(signaldata.audio,1)/signaldata.fs) ' s'])
             set(mainHandles.process_panel,'Visible','on');
             set(mainHandles.playback_panel,'Visible','on');
             set(mainHandles.channel_panel,'Visible','off');
@@ -129,41 +129,41 @@ function mySelectFcn(tree, ~)
             set(mainHandles.fun_box,'Visible','off');
             set(mainHandles.analyze_btn,'Visible','off');
             set(mainHandles.analyser_help_btn,'Visible','off');
-            if isfield(audiodata,'properties'), set(mainHandles.properties_btn,'Visible','on'); else set(mainHandles.properties_btn,'Visible','off'); end
-            setappdata(hMain,'testsignal', audiodata); % Set leaf contents in the 'desktop'
-            if ~ismatrix(audiodata.audio)
+            if isfield(signaldata,'properties'), set(mainHandles.properties_btn,'Visible','on'); else set(mainHandles.properties_btn,'Visible','off'); end
+            setappdata(hMain,'testsignal', signaldata); % Set leaf contents in the 'desktop'
+            if ~ismatrix(signaldata.audio)
                 set(mainHandles.channel_panel,'Visible','on');
                 set(mainHandles.IN_nchannel,'String','1');
-                if size(audiodata.audio,5) >1
+                if size(signaldata.audio,5) >1
                     if get(mainHandles.chandisp, 'Value') == 2
-                        set(mainHandles.tchannels,'String',['/ ' num2str(size(audiodata.audio,5))]);
+                        set(mainHandles.tchannels,'String',['/ ' num2str(size(signaldata.audio,5))]);
                     else
-                        set(mainHandles.tchannels,'String',['/ ' num2str(size(audiodata.audio,2))]);
+                        set(mainHandles.tchannels,'String',['/ ' num2str(size(signaldata.audio,2))]);
                     end
                     set(mainHandles.chandisp,'String',{'Input Channels'; 'Output Channels'})
                 else
-                    set(mainHandles.tchannels,'String',['/ ' num2str(size(audiodata.audio,2))]);
+                    set(mainHandles.tchannels,'String',['/ ' num2str(size(signaldata.audio,2))]);
                     set(mainHandles.chandisp,'String',{'Input Channels'})
                 end
-                if ndims(audiodata.audio) == 3, cmap = colormap(hsv(size(audiodata.audio,3))); end
-                if ndims(audiodata.audio) == 4, cmap = colormap(copper(size(audiodata.audio,4))); end
-                if ndims(audiodata.audio) >= 5, cmap = colormap(cool(size(audiodata.audio,5))); end
+                if ndims(signaldata.audio) == 3, cmap = colormap(hsv(size(signaldata.audio,3))); end
+                if ndims(signaldata.audio) == 4, cmap = colormap(copper(size(signaldata.audio,4))); end
+                if ndims(signaldata.audio) >= 5, cmap = colormap(cool(size(signaldata.audio,5))); end
                 set(mainHandles.aarae,'DefaultAxesColorOrder',cmap)
             else
-                cmap = colormap(lines(size(audiodata.audio,2)));
+                cmap = colormap(lines(size(signaldata.audio,2)));
                 set(mainHandles.aarae,'DefaultAxesColorOrder',cmap)
             end
             pause(0.001)
             refreshplots(mainHandles,'time')
             pause(0.001)
             refreshplots(mainHandles,'freq')
-            %if isfield(audiodata,'audio2') && ~isempty(audiodata.audio2)% && ismatrix(audiodata.audio)
+            %if isfield(signaldata,'audio2') && ~isempty(signaldata.audio2)% && ismatrix(signaldata.audio)
                 set(mainHandles.IR_btn,'Enable','on');
             %else
             %    set(mainHandles.IR_btn,'Enable','off');% Display process IR button if selection is a measurement based on a sine sweep
             %end
             pause(0.001)
-        elseif ~isempty(audiodata) && ~isfield(audiodata,'audio')% If there's data saved in the leaf but not audio...
+        elseif ~isempty(signaldata) && ~isfield(signaldata,'audio')% If there's data saved in the leaf but not audio...
             plot(mainHandles.axestime,0,0)
             plot(mainHandles.axesfreq,0,0)
             set(mainHandles.axestime,'Visible','off');
@@ -171,45 +171,45 @@ function mySelectFcn(tree, ~)
             set(mainHandles.time_units_display,'Visible','off');
             set(mainHandles.freq_units_display,'Visible','off');
             set([mainHandles.text16,mainHandles.text17,mainHandles.text18,mainHandles.text19,mainHandles.text20,mainHandles.text21],'Visible','off')
-            if isfield(audiodata,'data') || isfield(audiodata,'tables')
+            if isfield(signaldata,'data') || isfield(signaldata,'tables')
                 set(mainHandles.axesdata,'Visible','on');
             else
                 set(mainHandles.axesdata,'Visible','off');
             end
             set(mainHandles.audiodatatext,'String',[]);
-            datatext = evalc('audiodata');
+            datatext = evalc('signaldata');
             set(mainHandles.datatext,'Visible','on');
             set(mainHandles.datatext,'String',['Selected: ' selectedNodes.getName.char datatext]); % Output contents in textbox below the tree
             cla(mainHandles.axesdata)
         % Enable chart data visualization
-            if isfield(audiodata,'data')
+            if isfield(signaldata,'data')
                 set(mainHandles.data_panel1,'Visible','on');
-                filltable(audiodata,mainHandles)
+                filltable(signaldata,mainHandles)
                 doresultplot(mainHandles,mainHandles.axesdata)
                 mainHandles.tabledata = get(mainHandles.cattable,'Data');
             else
                 set(mainHandles.data_panel1,'Visible','off');
             end
         % Enable table data visualization
-            if isfield(audiodata,'tables')
+            if isfield(signaldata,'tables')
                 set(mainHandles.data_panel2,'Visible','on');
-                set(mainHandles.ntable_popup,'String',{audiodata.tables(:).Name})%cellstr(num2str((1:length(audiodata.tables))')));
+                set(mainHandles.ntable_popup,'String',{signaldata.tables(:).Name})%cellstr(num2str((1:length(signaldata.tables))')));
                 ntable = get(mainHandles.ntable_popup,'Value');
                 Xvalues = get(mainHandles.Xvalues_sel,'SelectedObject');
                 Xvalues = get(Xvalues,'tag');
                 switch Xvalues
                     case 'radiobutton1'
-                        if size(audiodata.tables(ntable).Data,2) < get(mainHandles.Yvalues_box,'Value'), set(mainHandles.Yvalues_box,'Value',1); end
-                        bar(mainHandles.axesdata,audiodata.tables(ntable).Data(:,get(mainHandles.Yvalues_box,'Value')),'FaceColor',[0 0.5 0.5])
-                        set(mainHandles.axesdata,'Xtick',1:length(audiodata.tables(ntable).RowName),'XTickLabel',audiodata.tables(ntable).RowName)
-                        set(mainHandles.Xvalues_box,'String',audiodata.tables(ntable).RowName,'Value',1)
-                        set(mainHandles.Yvalues_box,'String',audiodata.tables(ntable).ColumnName)
+                        if size(signaldata.tables(ntable).Data,2) < get(mainHandles.Yvalues_box,'Value'), set(mainHandles.Yvalues_box,'Value',1); end
+                        bar(mainHandles.axesdata,signaldata.tables(ntable).Data(:,get(mainHandles.Yvalues_box,'Value')),'FaceColor',[0 0.5 0.5])
+                        set(mainHandles.axesdata,'Xtick',1:length(signaldata.tables(ntable).RowName),'XTickLabel',signaldata.tables(ntable).RowName)
+                        set(mainHandles.Xvalues_box,'String',signaldata.tables(ntable).RowName,'Value',1)
+                        set(mainHandles.Yvalues_box,'String',signaldata.tables(ntable).ColumnName)
                     case 'radiobutton2'
-                        if size(audiodata.tables(ntable).Data,1) < get(mainHandles.Yvalues_box,'Value'), set(mainHandles.Yvalues_box,'Value',1); end
-                        bar(mainHandles.axesdata,audiodata.tables(ntable).Data(get(mainHandles.Yvalues_box,'Value'),:),'FaceColor',[0 0.5 0.5])
-                        set(mainHandles.axesdata,'Xtick',1:length(audiodata.tables(ntable).ColumnName),'XTickLabel',audiodata.tables(ntable).ColumnName)
-                        set(mainHandles.Xvalues_box,'String',audiodata.tables(ntable).ColumnName,'Value',1)
-                        set(mainHandles.Yvalues_box,'String',audiodata.tables(ntable).RowName)
+                        if size(signaldata.tables(ntable).Data,1) < get(mainHandles.Yvalues_box,'Value'), set(mainHandles.Yvalues_box,'Value',1); end
+                        bar(mainHandles.axesdata,signaldata.tables(ntable).Data(get(mainHandles.Yvalues_box,'Value'),:),'FaceColor',[0 0.5 0.5])
+                        set(mainHandles.axesdata,'Xtick',1:length(signaldata.tables(ntable).ColumnName),'XTickLabel',signaldata.tables(ntable).ColumnName)
+                        set(mainHandles.Xvalues_box,'String',signaldata.tables(ntable).ColumnName,'Value',1)
+                        set(mainHandles.Yvalues_box,'String',signaldata.tables(ntable).RowName)
                 end
                 ycontents = cellstr(get(mainHandles.Yvalues_box,'String'));
                 ylabel(mainHandles.axesdata,ycontents{get(mainHandles.Yvalues_box,'Value')})
@@ -227,7 +227,7 @@ function mySelectFcn(tree, ~)
             set(mainHandles.playback_panel,'Visible','off');
             set(mainHandles.channel_panel,'Visible','off');
             set([mainHandles.complextime mainHandles.complexfreq],'Visible','off')
-            if isfield(audiodata,'properties'), set(mainHandles.properties_btn,'Visible','on'); else set(mainHandles.properties_btn,'Visible','off'); end
+            if isfield(signaldata,'properties'), set(mainHandles.properties_btn,'Visible','on'); else set(mainHandles.properties_btn,'Visible','off'); end
             setappdata(hMain,'testsignal', []);
             pause(0.001)
         else
@@ -263,16 +263,16 @@ function mySelectFcn(tree, ~)
     guidata(aarae_fig,mainHandles);
 end  % mySelectFcn
 
-function filltable(audiodata,handles)
-fields = fieldnames(audiodata);
+function filltable(signaldata,handles)
+fields = fieldnames(signaldata);
 fields = fields(3:end-1);
 categories = fields(mod(1:length(fields),2) == 1);
 catdata = cell(size(categories));
 catunits = cell(size(categories));
 catorcont = cell(size(categories));
 for n = 1:length(categories)
-    catunits{n,1} = audiodata.(matlab.lang.makeValidName([categories{n,1} 'info'])).units;
-    catorcont{n,1} = audiodata.(matlab.lang.makeValidName([categories{n,1} 'info'])).axistype;
+    catunits{n,1} = signaldata.(matlab.lang.makeValidName([categories{n,1} 'info'])).units;
+    catorcont{n,1} = signaldata.(matlab.lang.makeValidName([categories{n,1} 'info'])).axistype;
     if islogical(catorcont{n,1}) && catorcont{n,1} == true
         catdata{n,1} = ':';
     else

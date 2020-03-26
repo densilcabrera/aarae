@@ -34,7 +34,7 @@ plottype = get(handles.(matlab.lang.makeValidName([axes '_popup'])),'Value');
     set(handles.(matlab.lang.makeValidName(['Tf_' axes])),'Visible','on')
     Tf_s = str2double(get(handles.(matlab.lang.makeValidName(['Tf_' axes])),'String'));
     Tf = floor(Tf_s*signaldata.fs);
-    if Tf > length(linea), Tf = length(linea); end
+    if Tf > size(linea,1), Tf = size(linea,1); end
     linea = linea(To:Tf,:);
 %else
 %    set([handles.(matlab.lang.makeValidName(['To_' axes])),handles.(matlab.lang.makeValidName(['Tf_' axes]))],'Visible','off')
@@ -83,7 +83,7 @@ if isfield(signaldata,'cal') && handles.Settings.calibrationtoggle == 1
                 signaldata.cal = signaldata.cal ./ 10.^(units_ref./10);
             end
         end
-        linea = linea.*repmat(10.^(signaldata.cal./20),length(linea),1);
+        linea = linea.*repmat(10.^(signaldata.cal./20),size(linea,1),1);
     elseif ~ismatrix(signaldata.audio) && size(signaldata.audio,2) == length(signaldata.cal)
         if isfield(signaldata,'properties')
             if isfield(signaldata.properties,'units')
@@ -119,22 +119,22 @@ if isfield(signaldata,'cal') && handles.Settings.calibrationtoggle == 1
         else
             cal = repmat(signaldata.cal(str2double(get(handles.IN_nchannel,'String'))),1,size(linea,2));
         end
-        linea = linea.*repmat(10.^(cal./20),length(linea),1);
+        linea = linea.*repmat(10.^(cal./20),size(linea,1),1);
     end
 else
     units = '';
     units_ref = 1;
     units_type = 1;
 end
-fftlength = length(linea);
+fftlength = size(linea,1);
 set(handles.(matlab.lang.makeValidName(['smooth' axes '_popup'])),'Visible','off');
 switch handles.Settings.specmagscale;
     case {'Divided by length'}
-        spectscale = 1./length(linea);
+        spectscale = 1./size(linea,1);
     case {'x sqrt2/length'}
-        spectscale = 2.^0.5./length(linea);
+        spectscale = 2.^0.5./size(linea,1);
     case {'x 2/length'}
-        spectscale = 2./length(linea);
+        spectscale = 2./size(linea,1);
     otherwise
         spectscale = 1;
 end
@@ -196,7 +196,7 @@ if strcmp(get(handles.(matlab.lang.makeValidName(['smooth' axes '_popup'])),'Vis
     if smoothfactor == 6, octsmooth = 24; end
     if smoothfactor ~= 1, linea = octavesmoothing(linea, octsmooth, signaldata.fs); end
 end
-t = (linspace(To_s,Tf_s,length(linea))).';
+t = (linspace(To_s,Tf_s,size(linea,1))).';
 f = (signaldata.fs .* ((1:fftlength)-1) ./ fftlength).';
 if plottype <= 7
     if ~isreal(signaldata.audio)
@@ -220,10 +220,10 @@ if plottype >= 8
     pixels = get_axes_width(handles.(matlab.lang.makeValidName(['axes' axes])));
     log_check = get(handles.(matlab.lang.makeValidName(['log' axes '_chk'])),'Value');
     if log_check == 0
-        [f1, linea1] = reduce_to_width(f(1:length(linea)), linea, pixels, [-inf inf]);
+        [f1, linea1] = reduce_to_width(f(1:size(linea,1)), linea, pixels, [-inf inf]);
         f1 = f1(:,1);
     else
-        [f1, linea1] = reduce_to_width(log10(1:length(linea))', linea, pixels, [-inf inf]);
+        [f1, linea1] = reduce_to_width(log10(1:size(linea,1))', linea, pixels, [-inf inf]);
         f1 = f1(:,1);
         f1 = (10.^f1)./max(10.^f1).*signaldata.fs;
     end
