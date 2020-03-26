@@ -898,7 +898,7 @@ if ~isempty(getappdata(hMain,'testsignal'))
     handles.mytree.setSelectedNode(handles.(signaldata.name));
     set([handles.clrall_btn,handles.export_btn],'Enable','on')
     % Log event
-    fprintf(handles.fid, ['%% ' datestr(now,16) ' - Generated ' newleaf ': duration = ' num2str(length(signaldata.audio)/signaldata.fs) ' s ; fs = ' num2str(signaldata.fs) ' Hz; size = ' num2str(size(signaldata.audio)) '\n']);
+    fprintf(handles.fid, ['%% ' datestr(now,16) ' - Generated ' newleaf ': duration = ' num2str(size(signaldata.audio,1)/signaldata.fs) ' s ; fs = ' num2str(signaldata.fs) ' Hz; size = ' num2str(size(signaldata.audio)) '\n']);
     % Log verbose metadata
     logaudioleaffields(signaldata,0);
 end
@@ -1136,7 +1136,7 @@ if ~isempty(audiodata)
     handles.mytree.expand(handles.measurements);
     handles.mytree.setSelectedNode(handles.(audiodata.name));
     set([handles.clrall_btn,handles.export_btn],'Enable','on')
-    fprintf(handles.fid, ['%% ' datestr(now,16) ' - Recorded "' newleaf '": duration = ' num2str(length(audiodata.audio)/audiodata.fs) 's\n']);
+    fprintf(handles.fid, ['%% ' datestr(now,16) ' - Recorded "' newleaf '": duration = ' num2str(size(audiodata.audio,1)/audiodata.fs) 's\n']);
     % Log verbose metadata
     logaudioleaffields(audiodata);
 end
@@ -1212,7 +1212,7 @@ else
         signaldata = getappdata(hMain,'testsignal');
         signaldata = checkcal(signaldata);
         signaldata = addhistory(signaldata,'Edited','audio','datatype');
-        fprintf(handles.fid, ['%% ' datestr(now,16) ' - Edited "' char(selectedNodes.getName) '": cropped from %fs to %fs (at input fs); new duration = ' num2str(length(signaldata.audio)/signaldata.fs) ' s\n\n'],xi,xf);
+        fprintf(handles.fid, ['%% ' datestr(now,16) ' - Edited "' char(selectedNodes.getName) '": cropped from %fs to %fs (at input fs); new duration = ' num2str(size(signaldata.audio,1)/signaldata.fs) ' s\n\n'],xi,xf);
         fprintf(handles.fid, '%% ***********************************************\n');
         signaldata.name = char(selectedNodes.getName); % name is set
         %within edit_signal, so we should not need to set it here.
@@ -2576,7 +2576,7 @@ if handles.compareaudio == 1
         
         % % PHASE DELAY
         %[signaldata.audio,f] = ...
-        %phasedelay(signaldata.audio,1,length(signaldata.audio),signaldata.fs);
+        %phasedelay(signaldata.audio,1,size(signaldata.audio,1),signaldata.fs);
         % (just an idea)
         %end
         
@@ -2775,15 +2775,15 @@ if handles.compareaudio == 1
             end
             To = floor(str2double(get(handles.To_time,'String'))*signaldata.fs)+1;
             Tf = floor(str2double(get(handles.Tf_time,'String'))*signaldata.fs);
-            if Tf > length(signaldata.audio), Tf = length(signaldata.audio); end
+            if Tf > size(signaldata.audio,1), Tf = size(signaldata.audio,1); end
             signaldata.audio = signaldata.audio(To:Tf,...
                 chanplot(chanplot<=chans(i)),...
                 bandplot(bandplot<=bands(i)),...
                 cycleplot(cycleplot<=cycles(i)),...
                 outchanplot(outchanplot<=outchans(i)),...
                 dim6plot(dim6plot<=dim6(i)));
-            t = linspace(0,length(signaldata.audio),length(signaldata.audio))./signaldata.fs;
-            f = signaldata.fs .* ((1:length(signaldata.audio))-1) ./ length(signaldata.audio);
+            t = linspace(0,size(signaldata.audio,1),size(signaldata.audio,1))./signaldata.fs;
+            f = signaldata.fs .* ((1:size(signaldata.audio,1))-1) ./ size(signaldata.audio,1);
             switch handles.Settings.specmagscale;
                 case {'Divided by length'}
                     spectscale = 1./len(i);
@@ -3159,7 +3159,7 @@ if handles.compareaudio == 1
             
             if plottype == 17
                 % GROUP DELAY
-                signaldata.audio = -diff(unwrap(angle(signaldata.audio))).*length(signaldata.audio)/(signaldata.fs*2*pi).*1000;
+                signaldata.audio = -diff(unwrap(angle(signaldata.audio))).*size(signaldata.audio,1)/(signaldata.fs*2*pi).*1000;
                 f = f(1:end-1);
             end
             
@@ -3633,8 +3633,8 @@ if handles.compareaudio == 1
     %         signaldata = selectedNodes(i).handle.UserData;
     %         if ~isempty(signaldata) && isfield(signaldata,'audio')
     %             plottype = get(handles.(matlab.lang.makeValidName([axes '_popup'])),'Value');
-    %             t = linspace(0,length(signaldata.audio),length(signaldata.audio))./signaldata.fs;
-    %             f = signaldata.fs .* ((1:length(signaldata.audio))-1) ./ length(signaldata.audio);
+    %             t = linspace(0,size(signaldata.audio,1),size(signaldata.audio,1))./signaldata.fs;
+    %             f = signaldata.fs .* ((1:size(signaldata.audio,1))-1) ./ size(signaldata.audio,1);
     %             if ~ismatrix(signaldata.audio)
     %                 if ndims(signaldata.audio) == 3, cmap = colormap(hsv(size(signaldata.audio,3))); end
     %                 if ndims(signaldata.audio) >= 4, cmap = colormap(copper(size(signaldata.audio,4))); end
@@ -3650,18 +3650,18 @@ if handles.compareaudio == 1
     %             if isfield(signaldata,'cal') && handles.Settings.calibrationtoggle == 1
     %                 if size(linea,2) == length(signaldata.cal)
     %                     signaldata.cal(isnan(signaldata.cal)) = 0;
-    %                     linea = linea.*repmat(10.^(signaldata.cal(:)'./20),length(linea),1);
+    %                     linea = linea.*repmat(10.^(signaldata.cal(:)'./20),size(linea,1),1);
     %                 elseif ~ismatrix(signaldata.audio) && size(signaldata.audio,2) == length(signaldata.cal)
     %                     signaldata.cal(isnan(signaldata.cal)) = 0;
     %                     cal = repmat(signaldata.cal(str2double(get(handles.IN_nchannel,'String'))),1,size(linea,2));
-    %                     linea = linea.*repmat(10.^(cal(:)'./20),length(linea),1);
+    %                     linea = linea.*repmat(10.^(cal(:)'./20),size(linea,1),1);
     %                 end
     %             end
     %             switch handles.Settings.specmagscale;
     %                 case {'Divided by length'}
-    %                     spectscale = 1./length(linea);
+    %                     spectscale = 1./size(linea,1);
     %                 case {'Times sqrt2/length'}
-    %                     spectscale = 2.^0.5./length(linea);
+    %                     spectscale = 2.^0.5./size(linea,1);
     %                 otherwise
     %                     spectscale = 1;
     %             end
@@ -3681,7 +3681,7 @@ if handles.compareaudio == 1
     %             if plottype == 14, linea = unwrap(angle(fft(linea))); end
     %             if plottype == 15, linea = angle(fft(linea)) .* 180/pi; end
     %             if plottype == 16, linea = unwrap(angle(fft(linea))) ./(2*pi); end
-    %             if plottype == 17, linea = -diff(unwrap(angle(fft(linea)))).*length(linea)/(signaldata.fs*2*pi).*1000; end
+    %             if plottype == 17, linea = -diff(unwrap(angle(fft(linea)))).*size(linea,1)/(signaldata.fs*2*pi).*1000; end
     %             if strcmp(get(handles.(matlab.lang.makeValidName(['smooth' axes '_popup'])),'Visible'),'on')
     %                 smoothfactor = get(handles.(matlab.lang.makeValidName(['smooth' axes '_popup'])),'Value');
     %                 if smoothfactor == 2, octsmooth = 1; end
@@ -3733,7 +3733,7 @@ if handles.compareaudio == 1
     %                 if plottype >= 8
     %                     h = subplot(length(selectedNodes),1,i);
     %                     set(gca,'NextPlot','replacechildren','ColorOrder',cmap)
-    %                     plot(f(1:length(linea)),linea);% Plot signal in frequency domain
+    %                     plot(f(1:size(linea,1)),linea);% Plot signal in frequency domain
     %                     title(strrep(selectedNodes(i).getName.char,'_',' '))
     %                     xlabel('Frequency [Hz]');
     %                     if ischar(handles.Settings.frequencylimits)
@@ -5258,7 +5258,7 @@ if ~isempty(click) && ((click == handles.axestime) || (get(click,'Parent') == ha
         end
         To = floor(str2double(get(handles.To_time,'String'))*signaldata.fs)+1;
         Tf = floor(str2double(get(handles.Tf_time,'String'))*signaldata.fs);
-        if Tf > length(signaldata.audio), Tf = length(data); end
+        if Tf > size(signaldata.audio,1), Tf = size(data,1); end
         if ~ismatrix(data)
             channel = str2double(get(handles.IN_nchannel,'String'));
             if handles.alternate == 0
@@ -5329,7 +5329,7 @@ if ~isempty(click) && ((click == handles.axestime) || (get(click,'Parent') == ha
                     end
                 end
                 signaldata.cal(isnan(signaldata.cal)) = 0;
-                linea = linea.*repmat(10.^(signaldata.cal./20),length(linea),1);
+                linea = linea.*repmat(10.^(signaldata.cal./20),size(linea,1),1);
             elseif ~ismatrix(signaldata.audio) && size(signaldata.audio,2) == length(signaldata.cal)
                 if isfield(signaldata,'properties')
                     if isfield(signaldata.properties,'units')
@@ -5376,22 +5376,22 @@ if ~isempty(click) && ((click == handles.axestime) || (get(click,'Parent') == ha
                 else
                     cal = repmat(signaldata.cal(str2double(get(handles.IN_nchannel,'String'))),1,size(linea,2));
                 end
-                linea = linea.*repmat(10.^(cal./20),length(linea),1);
+                linea = linea.*repmat(10.^(cal./20),size(linea,1),1);
             end
         else
             units = '';
             units_ref = 1;
             units_type = 1;
         end
-        t = linspace(To,Tf,length(linea))./signaldata.fs;
-        f = signaldata.fs .* ((1:length(linea))-1) ./ length(linea);
+        t = linspace(To,Tf,size(linea,1))./signaldata.fs;
+        f = signaldata.fs .* ((1:size(linea,1))-1) ./ size(linea,1);
         switch handles.Settings.specmagscale;
             case {'Divided by length'}
-                spectscale = 1./length(linea);
+                spectscale = 1./size(linea,1);
             case {'x sqrt2/length'}
-                spectscale = 2.^0.5./length(linea);
+                spectscale = 2.^0.5./size(linea,1);
             case {'x 2/length'}
-                spectscale = 2./length(linea);
+                spectscale = 2./size(linea,1);
             otherwise
                 spectscale = 1;
         end
@@ -5567,7 +5567,7 @@ if ~isempty(click) && ((click == handles.axestime) || (get(click,'Parent') == ha
             units_string = '';
         end
         if plottype == 17
-            linea = -diff(unwrap(angle(fft(linea)))).*length(linea)/(signaldata.fs*2*pi).*1000;
+            linea = -diff(unwrap(angle(fft(linea)))).*size(linea,1)/(signaldata.fs*2*pi).*1000;
             units_string = '';
         end
         if plottype <= 7
@@ -5588,7 +5588,7 @@ if ~isempty(click) && ((click == handles.axestime) || (get(click,'Parent') == ha
                 if smoothfactor ~= 1, linea = octavesmoothing(linea, octsmooth, signaldata.fs); end
             end
             %if plottype == 17,
-            plot(f(1:length(linea)),linea)%,'Marker','None'); end
+            plot(f(1:size(linea,1)),linea)%,'Marker','None'); end
             %if plottype ~= 17, semilogx(f,linea); end % Plot signal in frequency domain
             xlabel('Frequency [Hz]');
             yl = cellstr(get(handles.time_popup,'String'));
@@ -5639,7 +5639,7 @@ if ~isempty(click) && ((click == handles.axesfreq) || (get(click,'Parent') == ha
         end
         To = floor(str2double(get(handles.To_freq,'String'))*signaldata.fs)+1;
         Tf = floor(str2double(get(handles.Tf_freq,'String'))*signaldata.fs);
-        if Tf > length(signaldata.audio), Tf = length(data); end
+        if Tf > size(signaldata.audio,1), Tf = size(data,1); end
         if ~ismatrix(data)
             channel = str2double(get(handles.IN_nchannel,'String'));
             if handles.alternate == 0
@@ -5708,7 +5708,7 @@ if ~isempty(click) && ((click == handles.axesfreq) || (get(click,'Parent') == ha
                     end
                 end
                 
-                linea = linea.*repmat(10.^(signaldata.cal./20),length(linea),1);
+                linea = linea.*repmat(10.^(signaldata.cal./20),size(linea,1),1);
             elseif ~ismatrix(signaldata.audio) && size(signaldata.audio,2) == length(signaldata.cal)
                 if isfield(signaldata,'properties')
                     if isfield(signaldata.properties,'units')
@@ -5750,22 +5750,22 @@ if ~isempty(click) && ((click == handles.axesfreq) || (get(click,'Parent') == ha
                 end
                 signaldata.cal(isnan(signaldata.cal)) = 0;
                 cal = repmat(signaldata.cal(str2double(get(handles.IN_nchannel,'String'))),1,size(linea,2));
-                linea = linea.*repmat(10.^(cal./20),length(linea),1);
+                linea = linea.*repmat(10.^(cal./20),size(linea,1),1);
             end
         else
             units = '';
             units_ref = 1;
             units_type = 1;
         end
-        t = linspace(To,Tf,length(linea))./signaldata.fs;
-        f = signaldata.fs .* ((1:length(linea))-1) ./ length(linea);
+        t = linspace(To,Tf,size(linea,1))./signaldata.fs;
+        f = signaldata.fs .* ((1:size(linea,1))-1) ./ size(linea,1);
         switch handles.Settings.specmagscale;
             case {'Divided by length'}
-                spectscale = 1./length(linea);
+                spectscale = 1./size(linea,1);
             case {'x sqrt2/length'}
-                spectscale = 2.^0.5./length(linea);
+                spectscale = 2.^0.5./size(linea,1);
             case {'x 2/length'}
-                spectscale = 2./length(linea);
+                spectscale = 2./size(linea,1);
             otherwise
                 spectscale = 1;
         end
@@ -5941,7 +5941,7 @@ if ~isempty(click) && ((click == handles.axesfreq) || (get(click,'Parent') == ha
             units_string = '';
         end
         if plottype == 17
-            linea = -diff(unwrap(angle(fft(linea)))).*length(linea)/(signaldata.fs*2*pi).*1000;
+            linea = -diff(unwrap(angle(fft(linea)))).*size(linea,1)/(signaldata.fs*2*pi).*1000;
             units_string = '';
         end
         if plottype <= 7
@@ -5962,7 +5962,7 @@ if ~isempty(click) && ((click == handles.axesfreq) || (get(click,'Parent') == ha
                 if smoothfactor ~= 1, linea = octavesmoothing(linea, octsmooth, signaldata.fs); end
             end
             %if plottype == 17,
-            plot(f(1:length(linea)),linea)%,'Marker','None'); end
+            plot(f(1:size(linea,1)),linea)%,'Marker','None'); end
             %if plottype ~= 17, semilogx(f,linea); end % Plot signal in frequency domain
             xlabel('Frequency [Hz]');
             yl = cellstr(get(handles.freq_popup,'String'));
@@ -6136,13 +6136,13 @@ function To_freq_Callback(hObject, ~, handles) %#ok : Executed when initial time
 To_freq = str2double(get(hObject,'String'));
 selectedNodes = handles.mytree.getSelectedNodes;
 signaldata = selectedNodes(1).handle.UserData;
-if isnan(To_freq) || To_freq < 0 || To_freq == length(signaldata.audio)/signaldata.fs
+if isnan(To_freq) || To_freq < 0 || To_freq == size(signaldata.audio,1)/signaldata.fs
     %warndlg('Invalid entry','AARAE info','modal')
     set(hObject,'String',num2str(handles.To_freq_IN))
 elseif To_freq >= str2double(get(handles.Tf_freq,'String'))
     Tf_freq = To_freq + (handles.Tf_freq_IN - handles.To_freq_IN);
-    if Tf_freq > length(signaldata.audio)/signaldata.fs
-        Tf_freq = length(signaldata.audio)/signaldata.fs;
+    if Tf_freq > size(signaldata.audio,1)/signaldata.fs
+        Tf_freq = size(signaldata.audio,1)/signaldata.fs;
     end
     set(handles.Tf_freq,'String',num2str(Tf_freq))
     handles.To_freq_IN = To_freq;
@@ -6181,7 +6181,7 @@ function Tf_freq_Callback(hObject, ~, handles) %#ok : Executed when final time i
 Tf_freq = str2double(get(hObject,'String'));
 selectedNodes = handles.mytree.getSelectedNodes;
 signaldata = selectedNodes(1).handle.UserData;
-if isnan(Tf_freq) || Tf_freq <= str2double(get(handles.To_freq,'String')) || Tf_freq > length(signaldata.audio)/signaldata.fs
+if isnan(Tf_freq) || Tf_freq <= str2double(get(handles.To_freq,'String')) || Tf_freq > size(signaldata.audio,1)/signaldata.fs
     %warndlg('Invalid entry','AARAE info','modal')
     set(hObject,'String',handles.Tf_freq_IN)
     refreshplots(handles,'freq')
@@ -6217,12 +6217,12 @@ function To_time_Callback(hObject, ~, handles) %#ok : Executed when initial time
 To_time = str2double(get(hObject,'String'));
 selectedNodes = handles.mytree.getSelectedNodes;
 signaldata = selectedNodes(1).handle.UserData;
-if isnan(To_time) || To_time < 0 || To_time == length(signaldata.audio)/signaldata.fs
+if isnan(To_time) || To_time < 0 || To_time == size(signaldata.audio,1)/signaldata.fs
     set(hObject,'String',num2str(handles.To_time_IN))
 elseif To_time >= str2double(get(handles.Tf_time,'String'))
     Tf_time = To_time + (handles.Tf_time_IN - handles.To_time_IN);
-    if Tf_time > length(signaldata.audio)/signaldata.fs
-        Tf_time = length(signaldata.audio)/signaldata.fs;
+    if Tf_time > size(signaldata.audio,1)/signaldata.fs
+        Tf_time = size(signaldata.audio,1)/signaldata.fs;
     end
     set(handles.Tf_time,'String',num2str(Tf_time))
     handles.To_time_IN = To_time;
@@ -6260,7 +6260,7 @@ function Tf_time_Callback(hObject, ~, handles) %#ok : Executed when final time i
 Tf_time = str2double(get(hObject,'String'));
 selectedNodes = handles.mytree.getSelectedNodes;
 signaldata = selectedNodes(1).handle.UserData;
-if isnan(Tf_time) || Tf_time <= str2double(get(handles.To_time,'String')) || Tf_time > length(signaldata.audio)/signaldata.fs
+if isnan(Tf_time) || Tf_time <= str2double(get(handles.To_time,'String')) || Tf_time > size(signaldata.audio,1)/signaldata.fs
     %warndlg('Invalid entry','AARAE info','modal')
     set(hObject,'String',handles.Tf_time_IN)
     refreshplots(handles,'time')
