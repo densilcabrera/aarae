@@ -85,7 +85,7 @@ if nargin < 3
         Lx = L(1); Ly = L(2); Lz = L(3);
         s = str2num(answer{2,1});
         xs = s(1); ys = s(2); zs = s(3);
-        r = str2num(answer{3,1});
+        s = str2num(answer{3,1});
         xr = s(1); yr = s(2); zr = s(3);
         c = str2num(answer{4,1});
         jitter = str2num(answer{5,1});
