@@ -46,7 +46,8 @@ if(impalign)
     sequence = [zeros(1,starttoimpulse) impulse];
 end
 
-mls = GenerateMLS(N,1);
+mls = GenerateMLS(N,1); % for same MLS every time
+%mls = GenerateMLS(N,0); % for random seed
 
 for j=1:1:repetitions
    sequence = [sequence mls];
