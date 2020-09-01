@@ -33,7 +33,7 @@ if ~isempty(param) || nargin ~= 0
         y = y ./max(max(abs(y)));
     end
 
-    tag = ['Gaussian' num2str(duration)];
+    tag = ['t_noise' num2str(duration)];
     
     OUT.audio = y;
     %OUT.audio2 = flipud(y); % inverse that assumes flat spectrum (poor assumption)
