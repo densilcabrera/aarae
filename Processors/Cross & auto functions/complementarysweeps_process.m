@@ -3,13 +3,14 @@ function OUT = complementarysweeps_process(IN)
 % sweep, which can subsequently be converted into an impulse response using
 % the usual process (with the '*' button).
 
-% check for the distinctive field from complementarysweeps generator
-if ~isfield(IN,'properties')
+
+if ~isfield(IN,'properties') 
     OUT = [];
     return
 end
 
-if ~isfield(IN.properties,'complementarysweepsgap')
+% check for the distinctive field from complementarysweeps generator
+if ~isfield(IN.properties,'complementarysweepsgap') 
     OUT = [];
     return
 else
