@@ -124,11 +124,17 @@ set(hObject,'Enable','on');
 if ~isempty(handles.signaldata)
     set(handles.OK_Btn,'Enable','on')
     silence_check = get(handles.silence_chk','Value');
-    if handles.cycles > 1 || silence_check == 1
+    if abs(handles.cycles) > 1 || silence_check == 1
         numchannels = size(handles.signaldata.audio,2);
         cycles = handles.cycles;
+        if cycles<=-1
+            complementarysignals = true;
+            cycles = abs(cycles);
+        else
+            complementarysignals = false;
+        end
         if ~isnan(str2double(get(handles.levelrange_IN,'String')))
-            levelrange = linspace(abs(str2double(get(handles.levelrange_IN,'String'))).*-1,0,handles.cycles);
+            levelrange = linspace(abs(str2double(get(handles.levelrange_IN,'String'))).*-1,0,abs(handles.cycles));
             chancycles = false;
         else
             levelrange = zeros(1,cycles);
@@ -142,6 +148,10 @@ if ~isempty(handles.signaldata)
         lsilence = handles.lsilence*handles.signaldata.fs;
         sigdur = length(handles.signaldata.audio);
         scdur = sigdur + lsilence;
+        if complementarysignals
+            handles.signaldata.properties.complementarysignalsoffset = scdur;
+            scdur = 2*scdur; 
+        end
         if scdur < 0, scdur = 0; end
         handles.signaldata.properties.startflag = ((0:cycles-1)*scdur)+1;
         if scdur >= sigdur
@@ -151,31 +161,57 @@ if ~isempty(handles.signaldata)
         end
         for i = 1:cycles
             if ~chancycles
-                if lsilence>0
-                    chunk = [handles.signaldata.audio;zeros(lsilence,numchannels)];
+                if complementarysignals
+                    if lsilence>0
+                        chunk = [handles.signaldata.audio;zeros(lsilence,numchannels);-handles.signaldata.audio;zeros(lsilence,numchannels)];
+                    else
+                        chunk = [handles.signaldata.audio;-handles.signaldata.audio];
+                    end
                 else
-                    chunk = handles.signaldata.audio;
+                    if lsilence>0
+                        chunk = [handles.signaldata.audio;zeros(lsilence,numchannels)];
+                    else
+                        chunk = handles.signaldata.audio;
+                    end
                 end
             else
-                if lsilence>0
-                    chunk1 = [handles.signaldata.audio;zeros(lsilence,1)];
+                if complementarysignals
+                    if lsilence>0
+                        chunk1 = [handles.signaldata.audio;zeros(lsilence,1);-handles.signaldata.audio;zeros(lsilence,1)];
+                    else
+                        chunk1 = [handles.signaldata.audio;-handles.signaldata.audio];
+                    end
+                    chunk = [zeros(scdur,i-1),chunk1,zeros(scdur,cycles-i)];
                 else
-                    chunk1 = handles.signaldata.audio;
+                    if lsilence>0
+                        chunk1 = [handles.signaldata.audio;zeros(lsilence,1)];
+                    else
+                        chunk1 = handles.signaldata.audio;
+                    end
+                    chunk = [zeros(scdur,i-1),chunk1,zeros(scdur,cycles-i)];
                 end
-                chunk = [zeros(scdur,i-1),chunk1,zeros(scdur,cycles-i)];
             end
             audio(handles.signaldata.properties.startflag(i):handles.signaldata.properties.startflag(i)+length(chunk)-1,:)...
                 = audio(handles.signaldata.properties.startflag(i):handles.signaldata.properties.startflag(i)+length(chunk)-1,:)...
                 + chunk.*10.^(levelrange(i)/20);
         end
         if silence_check == 1
-            cycles = cycles + 1;
+            cycles = sign(cycles)*(abs(cycles) + 1);
             levelrange = [-Inf levelrange];
             audio = [zeros(scdur,numchannels);audio];
-            handles.signaldata.properties.startflag = ((0:cycles-1)*scdur)+1;
+            handles.signaldata.properties.startflag = ((0:abs(cycles)-1)*scdur)+1;
         end
         handles.signaldata.audio = audio;
         handles.signaldata.properties.relgain = levelrange(1,:);
+        handles.signaldata.properties.complementarysignals = complementarysignals;
+    else
+        if handles.cycles==-1
+            handles.signaldata.properties.complementarysignalsoffset = size(handles.signaldata.audio,1); % index of complementary signal is this value + 1
+            handles.signaldata.audio = [handles.signaldata.audio;-handles.signaldata.audio];
+            handles.signaldata.properties.complementarysignals = true;
+        else
+            handles.signaldata.properties.complementarysignals = false;
+        end
     end
     if ~isfield(handles.signaldata,'chanID')
         handles.signaldata.chanID = cellstr([repmat('Chan',size(handles.signaldata.audio,2),1) num2str((1:size(handles.signaldata.audio,2))')]);
@@ -248,15 +284,18 @@ function IN_cycles_Callback(hObject, ~, handles) %#ok : Executed when number of 
 % handles    structure with handles and user data (see GUIDATA)
 
 % Get number of cycles input
-cycles = str2double(get(handles.IN_cycles, 'string'));
+cycles = round(str2double(get(handles.IN_cycles, 'string')));
 
 % Check user's input
-if (isnan(cycles)||cycles<=0)
+if (isnan(cycles)||cycles==0)
     set(hObject,'String',num2str(handles.cycles));
-    warndlg('All inputs MUST be real positive numbers!');
+    warndlg('Cycles must be positive integers (or negative integers if you want complementary pairs of signals)');
+% elseif cycles < 0
+%      handles.cycles = cycles;
+%     warndlg('A negative number of cycles is used to make complementary signal pairs.');
 else
     handles.cycles = cycles;
-    if cycles > 1
+    if abs(cycles) > 1
         set([handles.levelrange_IN,handles.text15,handles.text16],'Visible','on')
         set([handles.lsilence_IN,handles.text17,handles.text18],'Visible','on')
     else

@@ -106,6 +106,28 @@ end
 
 [len, chans, bands, dim4,dim5,dim6] = size(audio);
 
+% average phase-complementary pairs of signals (if they exist)
+if isfield(IN,'properties')
+    if isfield(IN.properties,'complementarysignals')
+        if IN.properties.complementarysignals && isfield(IN.properties,'complementarysignalsoffset')
+            if isfield(IN.properties,'startflag')
+                startflag = IN.properties.startflag;
+            else
+                startflag = 1;
+            end
+            for d=1:length(startflag)
+                startindex1 = startflag(d);
+                endindex1 = startindex1 + IN.properties.complementarysignalsoffset-1;
+                startindex2 = startflag(d) + IN.properties.complementarysignalsoffset;
+                endindex2 = startindex2 + IN.properties.complementarysignalsoffset-1;
+                audio(startindex1:endindex1,:,:,:,:,:) = ...
+                mean(cat(7,audio(startindex1:endindex1,:,:,:,:,:),...
+                -audio(startindex2:endindex2,:,:,:,:,:)),7);
+            end
+        end
+    end
+end
+
 % Stack IRs in dimension 4 if AARAE's multi-cycle mode was used
 if isfield(IN,'properties')
     if isfield(IN.properties,'startflag') && dim4==1

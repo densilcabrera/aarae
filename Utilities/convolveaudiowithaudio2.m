@@ -99,7 +99,7 @@ if isfield(IN,'properties') && isfield(IN.properties,'startflag')
     
     
     
-    
+    % deal with multi-cycle recordings and related issues
     if methoddialog
         [method,ok] = listdlg('ListString',{'Synchronous average of cycles (excluding silent cycle)',...
             'Stack multicycle IR measurements in dimension 4',...
@@ -222,7 +222,17 @@ else
     method = 1;
 end
 
+% average complementary pairs of signals
+if isfield(IN,'properties') && method~=4 % method 4 is simply convolve without taking multicycles into account
+    if isfield(IN.properties,'complementarysignals')
+        if IN.properties.complementarysignals && isfield(IN.properties,'complementarysignalsoffset')
+            S = mean(cat(7,S(1:IN.properties.complementarysignalsoffset,:,:,:,:,:),...
+            -S((IN.properties.complementarysignalsoffset+1):2*IN.properties.complementarysignalsoffset,:,:,:,:,:)),7);
+        end
+    end
+end
 
+% Process the recording
 if ~exist('alternativemethod','var'), alternativemethod = 0; end
 if isempty(alternativemethod), alternativemethod = 0; end
 % time reversal methods (e.g. cross correlation)
@@ -723,7 +733,7 @@ end
 
 
 if exist('outputaudioonly','var')
-    if outputaudioonly~=0
+    if outputaudioonly
         % output audio only
         OUT = IR;
     else
