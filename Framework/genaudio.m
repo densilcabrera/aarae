@@ -206,8 +206,14 @@ if ~isempty(handles.signaldata)
         handles.signaldata.properties.complementarysignals = complementarysignals;
     else
         if handles.cycles==-1
-            handles.signaldata.properties.complementarysignalsoffset = size(handles.signaldata.audio,1); % index of complementary signal is this value + 1
-            handles.signaldata.audio = [handles.signaldata.audio;-handles.signaldata.audio];
+            lsilence = handles.lsilence*handles.signaldata.fs;
+            numchannels = size(handles.signaldata.audio,2);
+            if lsilence > 0
+                handles.signaldata.audio = [handles.signaldata.audio;zeros(lsilence,numchannels);-handles.signaldata.audio;zeros(lsilence,numchannels)];
+            else
+                handles.signaldata.audio = [handles.signaldata.audio;-handles.signaldata.audio];
+            end
+            handles.signaldata.properties.complementarysignalsoffset = 0.5*size(handles.signaldata.audio,1); % index of complementary signal is this value + 1
             handles.signaldata.properties.complementarysignals = true;
         else
             handles.signaldata.properties.complementarysignals = false;
@@ -297,6 +303,9 @@ else
     handles.cycles = cycles;
     if abs(cycles) > 1
         set([handles.levelrange_IN,handles.text15,handles.text16],'Visible','on')
+        set([handles.lsilence_IN,handles.text17,handles.text18],'Visible','on')
+    elseif cycles == -1
+        set([handles.levelrange_IN,handles.text15,handles.text16],'Visible','off')
         set([handles.lsilence_IN,handles.text17,handles.text18],'Visible','on')
     else
         set([handles.levelrange_IN,handles.text15,handles.text16],'Visible','off')
@@ -512,7 +521,7 @@ function silence_chk_Callback(hObject, ~, handles) %#ok : Executed when add sile
 % Hint: get(hObject,'Value') returns toggle state of silence_chk
 if get(hObject,'Value') == 1
     set([handles.lsilence_IN,handles.text17,handles.text18],'Visible','on')
-elseif get(hObject,'Value') == 0 && str2double(get(handles.IN_cycles,'String')) > 1
+elseif get(hObject,'Value') == 0 && str2double(get(handles.IN_cycles,'String')) ~= 1
     set([handles.lsilence_IN,handles.text17,handles.text18],'Visible','on')
 else
     set([handles.lsilence_IN,handles.text17,handles.text18],'Visible','off')
@@ -537,7 +546,7 @@ if (isnan(lsilence))
     set(hObject,'String',num2str(handles.lsilence));
     warndlg('All inputs MUST be real numbers!');
 else
-    handles.lsilence = lsilence;
+    handles.lsilence = abs(lsilence);
 end
 guidata(hObject, handles);
 
