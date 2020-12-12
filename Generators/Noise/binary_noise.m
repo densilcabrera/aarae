@@ -28,6 +28,7 @@ y(y<0) = -1;
     %OUT.audio2 = ifft(1./fft(y)); % alternative 'inverse'
     OUT.fs = fs;
     OUT.tag = tag;
+    OUT.properties.generator = 'binary_noise';
     OUT.funcallback.name = 'binary_noise.m';
     OUT.funcallback.inarg = {duration, chans, fs};
 else

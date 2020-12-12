@@ -68,6 +68,11 @@ function [OUT,method,scalingmethod] = convolveaudiowithaudio2(IN,method,scalingm
 % within this function for impulse response scaling.)
 
 
+ 
+
+
+
+
 S = IN.audio;
 if ~isequal(size(IN.audio),size(IN.audio2))
     rmsize = size(IN.audio);
@@ -163,7 +168,8 @@ if isfield(IN,'properties') && isfield(IN.properties,'startflag')
                 S = tempS;
                 %invS = invS(:,size(S,2));
                 
-                % consider returning the silent cycle somehow...
+                % consider returning the silent cycle somehow... (e.g. as
+                % audio2?)
                 %                 if isinf(IN.properties.relgain(1))
                 %
                 %                 end
@@ -232,6 +238,7 @@ if isfield(IN,'properties') && method~=4 % method 4 is simply convolve without t
     end
 end
 
+
 % Process the recording
 if ~exist('alternativemethod','var'), alternativemethod = 0; end
 if isempty(alternativemethod), alternativemethod = 0; end
@@ -246,6 +253,42 @@ end
 switch alternativemethod
     % the normal method is within 'otherwise'. The specified cases are for
     % other methods
+    case -1
+        % special generator-dependant methods
+        if isfield(IN,'properties') % check for special cases of test signals
+            if isfield(IN.properties,'generator')
+                switch IN.properties.generator
+                    case 'Golay'
+                        try
+                            IR = ifftshift(Golay_process(S,IN.fs,IN.audio2,false));
+                        catch
+                            disp('Golay processing failed. Try using the Golay_process processor instead.')
+                            IR = zeros(16,1);
+                        end
+                    case 'mls'
+                        try
+                            IR = ifftshift(MLS_process(S,0,1,-1,IN.properties.cycles,IN.properties.n)); % the third argument prevents multicycle stacking within the processor
+                        catch
+                            disp('MLS processing failed. Try using the MLS_process processor instead.')
+                            IR = zeros(16,1);
+                        end
+                    case 'irs'
+                        try
+                            IR = ifftshift(CircXcorrforIR(S,0,1,-1,IN.properties.cycles,IN.audio2));
+                        catch
+                            disp('Circular cross correlation processing of IRS failed. Try using the CircXcorrforIR processor instead.')
+                            IR = zeros(16,1);
+                        end
+                    otherwise
+                    simpleconvolve = true;    
+                end
+            else
+                simpleconvolve = true;
+            end
+        else
+            simpleconvolve = true;
+        end
+        
     case {3, 4}
         % circular convolution, based on length of audio2
         % (also circular cross correlation if one input has previously been
@@ -393,40 +436,43 @@ switch alternativemethod
 %         % time reverse, mag correction, then error correction
         
     otherwise
-        % linear convolution of audio with audio2 by spectrum
-        % multiplication
-        % this is for alternativemethod = 0, 1, 2
-        
-        maxsize = 1e6; % this could be a user setting
-        % (maximum size that can be handled to avoid
-        % out-of-memory error from convolution process)
-        if numel(S) <= maxsize
-            S_pad = [S; zeros(size(invS))];
-            invS_pad = [invS; zeros(size(S))];
-            IR = ifft(fft(S_pad) .* fft(invS_pad));
-        else
-            % use nested for-loops instead of doing everything at once (could
-            % be very slow!) if the audio is too big for vectorized processing
-            [~,chans,bands,dim4,dim5,dim6] = size(S);
-            IR = zeros(length(S)+length(invS),chans,bands,dim4,dim5,dim6);
-            for ch = 1:chans
-                for b = 1:bands
-                    for d4 = 1:dim4
-                        for d5 = 1:dim5
-                            for d6 = 1:dim6
-                                S_pad = [S(:,ch,b,d4,d5,d6);zeros(length(invS),1)];
-                                invS_pad = [invS(:,ch,b,d4,d5,d6); zeros(length(S),1)];
-                                IR(:,ch,b,d4,d5,d6) = ifft(fft(S_pad) .* fft(invS_pad));
-                            end
+        simpleconvolve = true;
+end
+
+if exist('simpleconvolve','var')
+    % linear convolution of audio with audio2 by spectrum
+    % multiplication
+    % this is for alternativemethod = 0, 1, 2
+    
+    maxsize = 1e6; % this could be a user setting
+    % (maximum size that can be handled to avoid
+    % out-of-memory error from convolution process)
+    if numel(S) <= maxsize
+        S_pad = [S; zeros(size(invS))];
+        invS_pad = [invS; zeros(size(S))];
+        IR = ifft(fft(S_pad) .* fft(invS_pad));
+    else
+        % use nested for-loops instead of doing everything at once (could
+        % be very slow!) if the audio is too big for vectorized processing
+        [~,chans,bands,dim4,dim5,dim6] = size(S);
+        IR = zeros(length(S)+length(invS),chans,bands,dim4,dim5,dim6);
+        for ch = 1:chans
+            for b = 1:bands
+                for d4 = 1:dim4
+                    for d5 = 1:dim5
+                        for d6 = 1:dim6
+                            S_pad = [S(:,ch,b,d4,d5,d6);zeros(length(invS),1)];
+                            invS_pad = [invS(:,ch,b,d4,d5,d6); zeros(length(S),1)];
+                            IR(:,ch,b,d4,d5,d6) = ifft(fft(S_pad) .* fft(invS_pad));
                         end
                     end
                 end
             end
         end
-        indices = cat(2,{1:length(S_pad)},repmat({':'},1,ndims(IR)-1));
-        IR = IR(indices{:});
+    end
+    indices = cat(2,{1:length(S_pad)},repmat({':'},1,ndims(IR)-1));
+    IR = IR(indices{:});
 end
-
 
 
 

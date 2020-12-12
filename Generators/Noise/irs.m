@@ -65,6 +65,7 @@ if ~isempty(param) || nargin ~= 0
     OUT.properties.n = n;
     OUT.properties.combinehalves = 1; % used to set dialog box default in CircXcorrforIR
     OUT.properties.cycles = cycles;
+    OUT.properties.generator = 'irs';
     OUT.funcallback.name = 'irs.m';
     OUT.funcallback.inarg = {n,cycles,fs};
 else

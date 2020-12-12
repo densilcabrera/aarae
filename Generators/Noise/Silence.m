@@ -41,6 +41,7 @@ if ~isempty(param) || nargin ~= 0
         OUT.audio = audio; 
         OUT.fs = fs;
         OUT.tag = 'Silence'; 
+        OUT.properties.generator = 'Silence';
         OUT.funcallback.name = 'Silence.m';
         OUT.funcallback.inarg = {fs, duration, chans, bands};
     end

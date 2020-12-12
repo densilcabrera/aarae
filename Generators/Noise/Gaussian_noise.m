@@ -26,6 +26,7 @@ y = randn(round(duration*fs),chans)/10;
     %OUT.audio2 = ifft(1./fft(y)); % alternative 'inverse'
     OUT.fs = fs;
     OUT.tag = tag;
+    OUT.properties.generator = 'Gaussian_noise';
     OUT.funcallback.name = 'Gaussian_noise.m';
     OUT.funcallback.inarg = {duration, chans, fs};
 else

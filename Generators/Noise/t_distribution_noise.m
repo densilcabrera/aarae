@@ -40,6 +40,7 @@ if ~isempty(param) || nargin ~= 0
     OUT.audio2 = ifft(1./fft(y)); % alternative 'inverse'
     OUT.fs = fs;
     OUT.tag = tag;
+    OUT.properties.generator = 't-distribution_noise';
     OUT.funcallback.name = 't_distribution_noise.m';
     OUT.funcallback.inarg = {degreesoffreedom,duration,chans,fs,normalize};
 else

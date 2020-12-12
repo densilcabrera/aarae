@@ -1,4 +1,4 @@
-function OUT = CircXcorrforIR(IN, offset, combinehalves, d2stack, cycles, n)
+function OUT = CircXcorrforIR(IN, offset, combinehalves, d2stack, cycles, audio2)
 % This function is used to analyse signals that were recorded using the IRS
 % generator within AARAE, and other generators that have test signals
 % designed for deriving an impulse response via circular cross-correlation.
@@ -76,6 +76,7 @@ if isstruct(IN)
     OUT = IN;
 else
     audio = IN;
+    len2 = length(audio2);
 end
 
 
@@ -104,7 +105,7 @@ else
     param = [];
 end
 
-[len, chans, bands, dim4,dim5,dim6] = size(audio);
+[len, chans, bands, dim4, dim5, dim6] = size(audio);
 
 % average phase-complementary pairs of signals (if they exist)
 if isfield(IN,'properties')
@@ -129,20 +130,23 @@ if isfield(IN,'properties')
 end
 
 % Stack IRs in dimension 4 if AARAE's multi-cycle mode was used
-if isfield(IN,'properties')
-    if isfield(IN.properties,'startflag') && dim4==1
-        startflag = IN.properties.startflag;
-        dim4 = length(startflag);
-        audiotemp = zeros((cycles+1)*len2,chans,bands,dim4,dim5,dim6);
-        for d=1:dim4
-            audiotemp(:,:,:,d,:,:) = ...
-                audio(startflag(d):startflag(d)+(cycles+1)*len2-1,:,:,1,:,:);
+if d2stack ~= -1
+    if isfield(IN,'properties')
+        if isfield(IN.properties,'startflag') && dim4==1
+            startflag = IN.properties.startflag;
+            dim4 = length(startflag);
+            audiotemp = zeros((cycles+1)*len2,chans,bands,dim4,dim5,dim6);
+            for d=1:dim4
+                audiotemp(:,:,:,d,:,:) = ...
+                    audio(startflag(d):startflag(d)+(cycles+1)*len2-1,:,:,1,:,:);
+            end
         end
     end
-end
-
-if exist('audiotemp','var')
-    audio = audiotemp;
+    
+    if exist('audiotemp','var')
+        audio = audiotemp;
+    end
+    
 end
 
 if d2stack == 1 && chans == 1 && dim4 > 1

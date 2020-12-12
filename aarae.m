@@ -1387,7 +1387,7 @@ selectedNodes = handles.mytree.getSelectedNodes;
 if ~isfield(audiodata,'audio2'), audiodata.audio2 = []; end
 if isempty(audiodata.audio2)
     % there is no secondary audio field, so let's get something as a
-    % substitute - this is envisaged to be expecially useful for transfer
+    % substitute - this is envisaged to be especially useful for transfer
     % function based calculations (where the recorded audio is compared
     % with the original audio). Currently this is restricted to only one
     % column of audio.
@@ -1440,9 +1440,33 @@ end
 
 if handles.alternate ~= 1
     % convolveaudiowithaudio2 is an AARAE utility
-    h = msgbox('Computing impulse response, please wait...','AARAE info','modal');
-    [IR,method,scalingmethod] = convolveaudiowithaudio2(audiodata,[],0,0,1);
-    calcmethod = 1;
+    % These are the default methods, including generator-specific methods
+    if isfield(audiodata,'properties') % check for special cases of test signals
+        if isfield(audiodata.properties,'generator')
+            switch audiodata.properties.generator
+                case {'Golay', 'mls', 'irs'}
+                    [IR,method,scalingmethod] = convolveaudiowithaudio2(audiodata,[],0,-1,1);
+                    % convolveaudiowithaudio2(IN,method,scalingmethod,alternativemethod,outputaudioonly)
+                    calcmethod = 0;
+                    h=[];
+                    % halve the length of audio2 so that window_signal
+                    % works appropriately (audio2 will be discarded)
+                    audiodata.audio2 = audiodata.audio2(1:(floor(size(audiodata.audio2,1)/2)),:,:,:,:,:);
+                otherwise
+                    h = msgbox('Computing impulse response, please wait...','AARAE info','modal');
+                    [IR,method,scalingmethod] = convolveaudiowithaudio2(audiodata,[],0,0,1);
+                    calcmethod = 1;
+            end
+        else
+            h = msgbox('Computing impulse response, please wait...','AARAE info','modal');
+            [IR,method,scalingmethod] = convolveaudiowithaudio2(audiodata,[],0,0,1);
+            calcmethod = 1;
+        end
+    else
+        h = msgbox('Computing impulse response, please wait...','AARAE info','modal');
+        [IR,method,scalingmethod] = convolveaudiowithaudio2(audiodata,[],0,0,1);
+        calcmethod = 1;
+    end
     nameprefix = 'IR_';
 else
     % select an alternative operation
@@ -1736,6 +1760,8 @@ if ~isempty(IR)
         
         fprintf(handles.fid, ['%% ' datestr(now,16) ' - Processed "' char(selectedNodes(1).getName) '" to generate an impulse response of ' num2str(IRlength) ' points\n']);
         switch calcmethod
+            case 0
+                str1 = 'calcmethod = 0; %% Generator-specific calculation method';
             case 1
                 str1 = 'calcmethod = 1; %% Convolve audio with audio2';
             case 2

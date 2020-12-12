@@ -44,6 +44,7 @@ y = 2*(y-1) ./(max(y)-1) -1; % normalize to -1 / 1
     OUT.tag = tag;
     OUT.properties.dur = duration;
     OUT.properties.seed = seed;
+    OUT.properties.generator = 'pseudorand';
     OUT.funcallback.name = 'pseudorand1.m';
     OUT.funcallback.inarg = {duration,seed,fs};
 else

@@ -177,6 +177,7 @@ if ~isempty(param) || nargin ~= 0
     OUT.properties.dur = duration;
     OUT.properties.freq = [flow, fhigh];
     OUT.properties.window = window;
+    OUT.properties.generator = 'noise';
     OUT.funcallback.name = 'noise.m';
     OUT.funcallback.inarg = {fexponent, duration, fs, flow, fhigh, nchan, window, display};
 else

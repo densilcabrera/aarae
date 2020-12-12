@@ -210,6 +210,10 @@ else
     end
     if trimsamp_low < 1, trimsamp_low = 1; end
     if trimsamp_high > size(handles.IR,1), trimsamp_high = size(handles.IR,1); end
+    if trimsamp_high <= trimsamp_low % something went wrong!
+        trimsamp_low = 1;
+        trimsamp_high = size(handles.IR,1);
+    end
     handles.slow = trimsamp_low;
     handles.shigh = trimsamp_high; 
     set(handles.trimlow,'String',num2str(trimsamp_low))
@@ -480,7 +484,10 @@ IRlength = max(id);
     end
     if trimsamp_low < 1, trimsamp_low = 1; end
     if trimsamp_high > size(handles.IR,1), trimsamp_high = size(handles.IR,1); end
-
+    if trimsamp_high <= trimsamp_low % something went wrong!
+        trimsamp_low = 1;
+        trimsamp_high = size(handles.IR,1);
+    end
 
 handles.slow = trimsamp_low;
 handles.shigh = trimsamp_high;

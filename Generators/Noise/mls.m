@@ -66,8 +66,8 @@ if nargin == 0
     if length(param) < 3, param = []; end
     if ~isempty(param)
         n = round(param(1));
-        if n > 24, n = 24; end;
-        if n < 2, n = 2; end;
+        if n > 24, n = 24; end
+        if n < 2, n = 2; end
         cycles = round(param(2));
         if cycles < 2, cycles = 2; end
         fs = param(3);
@@ -83,6 +83,7 @@ if ~isempty(param) || nargin ~= 0
     OUT.tag = ['MLS' num2str(n)];
     OUT.properties.n = n;
     OUT.properties.cycles = cycles;
+    OUT.properties.generator = 'mls';
     OUT.funcallback.name = 'mls.m';
     OUT.funcallback.inarg = {n,cycles,fs};
 else

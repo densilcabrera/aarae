@@ -16,7 +16,8 @@ function OUT = MLS_process(IN, offset, DCCoupling, d2stack, cycles, n)
 %   IR stack in dimension 2 (if available): in AARAE, dimenson 2 is used
 %   for channels, and if it is singleton, then multiple IRs can be stacked
 %   in dimension 2 instead of in dimension 4. If d2stack == 1, then this
-%   will be done; otherwise IRs are always stacked in dimension 4.
+%   will be done; if d2stack == -1 then no stacking is done, otherwise IRs
+%   are stacked in dimension 4.
 %   
 % code by Densil Cabrera
 % version 1 (31 July 2014)
@@ -47,7 +48,7 @@ end
 if nargin ==1
     param = inputdlg({'Offset in samples';... %
         'DC recovery [0 | 1]';
-        'IR stack in dimension 2 if available [0 | 1]'},...%
+        'IR stack in dimension 2 if available [0 | 1]'},...% use -1 for no stacking
         'MLS process settings',...
         [1 60],...
         {'0';'1';'1'});
@@ -65,7 +66,7 @@ else
     param = [];
 end
 
-[~, chans, bands, dim4] = size(audio);
+[~, chans, bands, dim4, dim5, dim6] = size(audio);
 
 
 % average phase-complementary pairs of signals (if they exist)
@@ -90,39 +91,52 @@ if isfield(IN,'properties')
     end
 end
 
-% Stack IRs in dimension 4 if AARAE's multi-cycle mode was used
-if isfield(IN,'properties')
-    if isfield(IN.properties,'startflag') && dim4==1
-        startflag = IN.properties.startflag;
-        dim4 = length(startflag);
-        audiotemp = zeros((cycles+1)*(2^n-1),chans,bands,dim4);
-        for d=1:dim4
-            audiotemp(:,:,:,d) = ...
-                audio(startflag(d):startflag(d)+(cycles+1)*(2^n-1)-1,:,:);
+% Stack IRs in dimension 4 (or 2) if AARAE's multi-cycle mode was used
+if d2stack ~= -1
+    if isfield(IN,'properties')
+        if isfield(IN.properties,'startflag') && dim4==1
+            startflag = IN.properties.startflag;
+            dim4 = length(startflag);
+            audiotemp = zeros((cycles+1)*(2^n-1),chans,bands,dim4,dim5,dim6);
+            for d=1:dim4
+                audiotemp(:,:,:,d,:,:) = ...
+                    audio(startflag(d):startflag(d)+(cycles+1)*(2^n-1)-1,:,:,1,:,:);
+            end
+        end
+    end
+    
+    
+    if exist('audiotemp','var')
+        audio = audiotemp;
+    end
+    
+    if d2stack == 1 && chans == 1 && dim4 > 1
+        audio = permute(audio,[1,4,3,2,5,6]);
+        chans = dim4;
+        dim4 = 1;
+    end
+end  
+    
+impalign = 0; % not used by generator
+ir = zeros(2^n,chans,bands,dim4,dim5,dim6);
+for d6 = 1:dim6
+    for d5 = 1:dim5
+        for d4=1:dim4
+            for b = 1:bands
+                ir(:,:,b,d4,d5,d6) = AnalyseMLSSequence(audio(:,:,b,d4,d5,d6),offset,cycles,n,DCCoupling,impalign);
+            end
         end
     end
 end
 
-if exist('audiotemp','var')
-    audio = audiotemp;
-end
 
-if d2stack == 1 && chans == 1 && dim4 > 1
-    audio = permute(audio,[1,4,3,2]);
-    chans = dim4;
-    dim4 = 1;
-end
+    
+    
 
-
-impalign = 0; % not used by generator
-ir = zeros(2^n,chans,bands,dim4);
-for d4=1:dim4
-    for b = 1:bands
-        ir(:,:,b,d4) = AnalyseMLSSequence(audio(:,:,b,d4),offset,cycles,n,DCCoupling,impalign);
-    end
-end
 
 if isstruct(IN)
+    OUT = IN;
+    %OUT = rmfield(OUT,'audio2');
     OUT.audio = ir;
     OUT.funcallback.name = 'MLS_process.m';
     OUT.funcallback.inarg = {offset, DCCoupling, d2stack, cycles, n};

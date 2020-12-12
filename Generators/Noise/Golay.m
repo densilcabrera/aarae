@@ -72,6 +72,7 @@ end
             OUT.tag = ['Golay',num2str(N0)];
             OUT.properties.GolayN = N;
             OUT.properties.Golaysilence = silence;
+            OUT.properties.generator = 'Golay';
             OUT.funcallback.name = 'Golay.m';
             OUT.funcallback.inarg = {fs,N,silence};
         end
