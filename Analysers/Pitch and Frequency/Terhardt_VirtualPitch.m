@@ -390,7 +390,7 @@ if ~isempty(audio) && ~isempty(fs) && ~isempty(cal)
         ChromaSalience(:,8) = ChromaSalienceTemp(:,2);
         ChromaSalience(:,10) = ChromaSalienceTemp(:,4);
         ChromaSalience(:,12) = ChromaSalienceTemp(:,6);
-        chomalabel = {'A' 'E' 'B' 'F#' 'C#' 'G#' 'D#' 'A#' 'F' 'C' 'G' 'D'};
+        chromalabel = {'A' 'E' 'B' 'F#' 'C#' 'G#' 'D#' 'A#' 'F' 'C' 'G' 'D'};
     else
         chromalabel = {'A' 'A#' 'B' 'C' 'C#' 'D' 'D#' 'E' 'F' 'F#' 'G' 'G#'};
     end
