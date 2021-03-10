@@ -1550,9 +1550,9 @@ function calfield_btn_Callback(~, ~, handles) %#ok : Executed when cal field val
 % hObject    handle to calfield_btn (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-deviceinfo = dspAudioDeviceInfo('inputs');
+%deviceinfo = dspAudioDeviceInfo('inputs');
 inputsel = get(handles.mainHandles.inputdev_popup,'Value');
-msgbox(num2str([(1:deviceinfo(inputsel).maxInputs);handles.output.cal]'))
+msgbox(num2str([1:size(handles.output.cal,2);handles.output.cal]'))
 
 
 
