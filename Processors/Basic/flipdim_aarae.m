@@ -56,7 +56,8 @@ if isstruct(in)
         
         if isfield(in,'chanID')
             chanID = in.chanID;
-            if ~isrow(chanID), chanID = chanID'; end
+            %if ~isrow(chanID), chanID = chanID'; end
+            if isrow(chanID), chanID = chanID'; end
             out.chanID = flipdim(chanID,2);
         end
     end
