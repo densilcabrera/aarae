@@ -129,11 +129,13 @@ else
     inputnames = regexprep(inputnames,'\s\(Windows DirectSound\)','');
     inputnames = regexprep(inputnames,'\s\(ASIO\)','');
     inputnames = regexprep(inputnames,'\s\(Core Audio\)','');
+    inputnames = regexprep(inputnames,'\s\(ALSA\)','');
     set(handles.inputdev_popup,'String',inputnames)
     %*****    outputdevinfo = dspAudioDeviceInfo('outputs');
     outputnames = regexprep(outputnames,'\s\(Windows DirectSound\)','');
     outputnames = regexprep(outputnames,'\s\(ASIO\)','');
     outputnames = regexprep(outputnames,'\s\(Core Audio\)','');
+    outputnames = regexprep(outputnames,'\s\(ALSA\)','');
     set(handles.outputdev_popup,'String',outputnames)
     if ~isempty(handles.signaldata) && ismatrix(handles.signaldata.audio) && ~strcmp(handles.signaldata.datatype,'syscal')% If there's a signal loaded in the 'desktop'...
         % Allow visibility of playback option along with the specs of
