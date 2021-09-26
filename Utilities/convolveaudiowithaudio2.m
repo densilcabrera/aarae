@@ -261,13 +261,16 @@ switch alternativemethod
                     case 'Golay'
                         try
                             IR = ifftshift(Golay_process(S,IN.fs,IN.audio2,false));
+                            logtext('Processed using Golay_process. \n')
                         catch
                             disp('Golay processing failed. Try using the Golay_process processor instead.')
                             IR = zeros(16,1);
                         end
                     case 'mls'
                         try
-                            IR = ifftshift(MLS_process(S,0,1,-1,IN.properties.cycles,IN.properties.n)); % the third argument prevents multicycle stacking within the processor
+                            % process without DC recovery
+                            IR = ifftshift(MLS_process(S,0,0,-1,IN.properties.cycles,IN.properties.n)); % the fourth argument prevents multicycle stacking within the processor
+                            logtext('Processed using MLS_process. \n')
                         catch
                             disp('MLS processing failed. Try using the MLS_process processor instead.')
                             IR = zeros(16,1);
@@ -275,8 +278,9 @@ switch alternativemethod
                     case 'irs'
                         try
                             IR = ifftshift(CircXcorrforIR(S,0,1,-1,IN.properties.cycles,IN.audio2));
+                            logtext('Processed using CircXcorrforIR. \n')
                         catch
-                            disp('Circular cross correlation processing of IRS failed. Try using the CircXcorrforIR processor instead.')
+                            disp('Circular cross correlation processing of inverse repeated sequence (IRS) recording failed. Try using the CircXcorrforIR processor instead.')
                             IR = zeros(16,1);
                         end
                     otherwise
