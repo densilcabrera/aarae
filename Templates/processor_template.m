@@ -1,10 +1,24 @@
-function [OUT varargout] = VirtualAudioSystem(IN, input_1, input_2)
-% This function is used to create an audio system response, incorporating:
-% * Time-invariant temporal characteristics such as echoes and reverberation
-% * Spectral characteristics
-% * Background noise
-% * Harmonic distortion
-% * Time variance
+function [OUT varargout] = processor_template(IN, input_1, input_2)
+% This function can be used as a template for adapting your audio
+% processing functions to work in the AARAE environment.
+%
+% AARAE processors take the audio information stored in the AARAE tree
+% display and process the input to produce an output. Unlike generator and
+% calculator functions in AARAE, processor functions require an input in
+% the form of a structure type variable (IN) and will output a structure
+% type variable with the processed audio (OUT). The input structure will
+% ALWAYS have at least the fields .audio, .fs and .datatype that you can
+% use to process the audio. Processors may as well include additional
+% fields to the output structure such as .bandID.
+%
+% You can also use these first few lines to write a brief description of
+% what your function does. This will be displayed as a tooltip when the
+% user hoovers the mouse over the box where your function is displayed in
+% AARAE
+%
+% The next few lines show an example on how you may use MATLAB's built-in
+% inputdlg function to allow the user to type in the input arguments your
+% function requires to work.
 
 if nargin ==1 % If the function is called within the AARAE environment it
     % will have at least one input parameter which is the audio
