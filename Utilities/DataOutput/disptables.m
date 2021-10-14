@@ -80,13 +80,16 @@ end
 
 
 % % Get the Java scroll-pane container reference
-jScrollPane = findjobj(tables);
-%  http://undocumentedmatlab.com/blog/customizing-listbox-editbox-scrollbars
-if y+20 > 0.9*ss(4)
-    jScrollPane.setVerticalScrollBarPolicy(22); % or: jScrollPane.VERTICAL_SCROLLBAR_ALWAYS
-end
-if x>0.9*ss(3)
-    jScrollPane.setHorizontalScrollBarPolicy(30);  % or: jScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
+try
+    jScrollPane = findjobj(tables);
+    %  http://undocumentedmatlab.com/blog/customizing-listbox-editbox-scrollbars
+    if y+20 > 0.9*ss(4)
+        jScrollPane.setVerticalScrollBarPolicy(22); % or: jScrollPane.VERTICAL_SCROLLBAR_ALWAYS
+    end
+    if x>0.9*ss(3)
+        jScrollPane.setHorizontalScrollBarPolicy(30);  % or: jScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
+    end
+catch
 end
 
 for n = 1:length(tables)
