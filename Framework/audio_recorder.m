@@ -1223,9 +1223,9 @@ else
         %%%% handles.recording.cal = handles.syscalstats.cal(1:size(handles.recording.audio,2));
         handles.recording.cal = handles.syscalstats.cal(handles.numchs);
         if isfield(handles.syscalstats, 'units')
-            handles.recording.properties.units = handles.syscalstats.units(handles.numchs);
-            handles.recording.properties.units_ref = handles.syscalstats.units_ref(handles.numchs);
-            handles.recording.properties.units_type = handles.syscalstats.units_type(handles.numchs);
+            handles.recording.properties.units = handles.syscalstats.units; %(handles.numchs);
+            handles.recording.properties.units_ref = handles.syscalstats.units_ref; %(handles.numchs);
+            handles.recording.properties.units_type = handles.syscalstats.units_type; %(handles.numchs);
         end
     end
     handles.recording.history = cell(2,4);
