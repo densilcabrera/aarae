@@ -63,6 +63,8 @@ function audio_recorder_OpeningFcn(hObject, ~, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to audio_recorder (see VARARGIN)
 
+% refresh audio device list on opening the audio recorder window
+audiodevreset;
 
 % This next couple of lines checks if the GUI is being called from the main
 % window, otherwise it doesn't run.
