@@ -824,7 +824,7 @@ if get(handles.pb_enable,'Value') == 1
                         reset(handles.hsr1)
                     end
                 case 1
-                    dummy = zeros(handles.hsr1.SamplesPerFrame,str2num(get(handles.IN_numchsout, 'String')));
+                    dummy = zeros(handles.hsr1.SamplesPerFrame,numel(OutCh));
                     setup(handles.hap,dummy);
                     [~] = handles.har();
                     handles.hap(dummy);
