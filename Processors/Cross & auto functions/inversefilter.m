@@ -314,7 +314,7 @@ if ~isempty(fs) && ~isempty(Threshold) && ~isempty(hiF) && ~isempty(loF) && ~ise
 
         subplot3 = subplot(2,2,3:4);
         f = fs*((1:round(length(invfilter)/2))-1)./length(invfilter);
-         invfilterspectrum = fft(invfilter);
+        invfilterspectrum = fft(out);
         invfilterspectrum = abs(invfilterspectrum(1:length(f))) ./ max(abs(invfilterspectrum(1:length(f))));
         semilogx(f,mag2db(invfilterspectrum),...
             'Color',outcolor);
