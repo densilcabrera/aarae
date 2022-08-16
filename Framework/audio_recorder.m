@@ -354,11 +354,10 @@ set([handles.cancel_btn handles.load_btn handles.preview_btn handles.syscal_btn]
 set([handles.stack_btn,handles.stack_edit_btn], 'Visible', 'off','Enable','off');
 % set ASIO based on input (or output - no situation where there is output
 % only and windows only allows same device for Input/Output) device selection.
-% matlab portaudio implementation of ASIO is irritating. why not let the
-% device name change the driver... ?
+
     inputs = cellstr(get(handles.inputdev_popup,'String'));
     inputdevname = inputs{get(handles.inputdev_popup,'Value')};
-    if ~ispc ||any(strcmp(inputdevname, regexprep(handles.winputnames,'\s\(Windows DirectSound)','')))
+    if ~ispc ||any(strcmp(inputdevname, regexprep(handles.winputnames,'\s\(Windows DirectSound)',''))) || size(handles.winputnames,1) == 0
         handles.ASIO = 0; 
     else
         handles.ASIO = 1;
