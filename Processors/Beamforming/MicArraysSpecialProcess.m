@@ -120,9 +120,10 @@ coords = repmat(coords,[dim4,1]);
 if dim4 > 1
     for d4 = 2:dim4
         % rotate and translate the microphone coordinates for each step
-        coords((d4*(chans-1)+1):end,:) =...
-            AxelRot(coords((d4*(chans-1)+1):end,:)', rotstep, rotaxis, [0,0,0])'...
-            + repmat(trans,[size(coords((d4*(chans-1)+1):end,:),1),1]);
+        % JONO: INDEXING FIX
+        coords(((d4-1)*chans+1):end,:) =...
+            AxelRot(coords(((d4-1)*chans+1):end,:)', rotstep, rotaxis, [0,0,0])'...
+            + repmat(trans,[size(coords(((d4-1)*chans+1):end,:),1),1]);
     end
 end
 
