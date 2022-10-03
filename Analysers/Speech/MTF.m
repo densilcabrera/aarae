@@ -7,7 +7,7 @@ function OUT = MTF(IR)
 
 fs = IR.fs;
 
-[len,chans,bands,dim4,dim5,dim6] = size(IR.audio);
+[~,chans,bands,dim4,dim5,dim6] = size(IR.audio);
 if bands > 1
     IR.audio = mean(IR.audio,3);
 end
@@ -17,6 +17,10 @@ if dim4 > 1 && chans == 1
     dim4=1;
     chans = size(IR.audio,2);
 end
+
+% zero-pad the IR so that MTF covers the full IR
+IR.audio = [IR.audio; zeros(round(1.6*fs),chans,1,1,dim5,dim6)];
+len = size(IR.audio,1);
 
 % Nyquist frequency
 Nyquist=fs/2;
