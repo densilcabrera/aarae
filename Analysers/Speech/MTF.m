@@ -19,7 +19,7 @@ if dim4 > 1 && chans == 1
 end
 
 % zero-pad the IR so that MTF covers the full IR
-IR.audio = [IR.audio; zeros(round(1.6*fs),chans,1,1,dim5,dim6)];
+IR.audio = [IR.audio; zeros(round(1.6*fs),chans,1,dim4,dim5,dim6)];
 len = size(IR.audio,1);
 
 % Nyquist frequency
