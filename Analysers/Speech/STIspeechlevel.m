@@ -12,11 +12,10 @@ if isstruct(speech)
     signal = speech.audio;
     fs = speech.fs;
     if isfield(speech,'cal')
-        cal = speech.cal;      
+        cal = speech.cal;
     else
         cal = zeros(1,size(signal,2));
     end
-    gain = 10.^(cal/20);
     if isfield(speech,'chanID')
         chanID = speech.chanID;
     else
@@ -26,13 +25,12 @@ else
     signal = speech;
     if nargin < 3
         cal = inputdlg({'Calibration offset [dB]'},...
-                           'Cal',1,{'0'});
+            'Cal',1,{'0'});
         cal = str2num(char(cal));
     end
-    gain = 10^(cal/20);
     if nargin < 2
         fs = inputdlg({'Sampling frequency [samples/s]'},...
-                           'Fs',1,{'48000'});
+            'Fs',1,{'48000'});
         fs = str2num(char(fs));
     end
 end
@@ -81,7 +79,7 @@ if nargin < 3
     num_lines = 1;
     def = {num2str(20*log10(gain)),'15','1'};
     answer = inputdlg(prompt,dlg_title,num_lines,def);
-    
+
     if isempty(answer)
         OUT = [];
         return
@@ -142,8 +140,12 @@ if ~isempty(signal) && ~isempty(fs) && ~isempty(cal) && ~isempty(doplot) && ~ise
     L.speechJ2 = zeros(1,chans);
 
     for ch = 1:chans
-        ind(ch) = find(LL.sort(:,ch) <= LL.cummean(:,ch)-14,1,'first');
-        L.speechJ2(ch) = LL.cummean(ind(ch),ch);
+        try
+            ind(ch) = find(LL.sort(:,ch) <= LL.cummean(:,ch)-14,1,'first');
+            L.speechJ2(ch) = LL.cummean(ind(ch),ch);
+        catch
+            L.speechJ2(ch) = nan;
+        end
     end
 
     % Equivalent A-weignted sound pressure level
@@ -197,52 +199,52 @@ if ~isempty(signal) && ~isempty(fs) && ~isempty(cal) && ~isempty(doplot) && ~ise
         end
 
     end
-fc = [125,250,500,1000,2000,4000,8000];
-filterorder = 24; % very steep filter skirts improve the performance
-P_octave = octbandfilter_viaFFT(signal2,fs,...
-    fc,filterorder);
+    fc = [125,250,500,1000,2000,4000,8000];
+    filterorder = 24; % very steep filter skirts improve the performance
+    P_octave = octbandfilter_viaFFT(signal2,fs,...
+        fc,filterorder);
 
-% OLD OCTAVE BAND FILTERS - DO NOT USE
-% % Define the octave band filter parameters
-% Nyquist = fs/2;
-% bandnumber=21:3:39; % filter band numbers
-% fc=10.^(bandnumber./10); % filter centre frequencies in Hz
-% bandwidth = 1; % set to 0.5 instead of 1 if you want to try half-octave bandwidths
-% f_low=fc./10^(0.15*bandwidth); % low cut-off frequency in Hz
-% f_hi=fc.*10^(0.15*bandwidth); % high cut-off frequency in Hz
-% halforder = 3; % half of the filter order: a value of 3 yields a 6th order filter
-% 
-% P_octave = zeros(length(signal2), chans, length(fc));
-% for k=1:length(fc);
-%     % use filter order of 6 (half-order = 3)
-%     [b, a]=butter(halforder, [f_low(k)/Nyquist f_hi(k)/Nyquist]);
-%     P_octave(:,:,k)=filtfilt(b,a, signal2); % linear phase filter
-%     
-% end
-onoffratio = zeros(1,chans);
-for ch = 1:chans
-    onoffratio(1,ch) = ind(ch) / length(LL.sort);
-end
-    % Define the octave band filter parameters
-    Nyquist = fs/2;
-    bandnumber=21:3:39; % filter band numbers
-    fc=10.^(bandnumber./10); % filter centre frequencies in Hz
-    bandwidth = 1; % set to 0.5 instead of 1 if you want to try half-octave bandwidths
-    f_low=fc./10^(0.15*bandwidth); % low cut-off frequency in Hz
-    f_hi=fc.*10^(0.15*bandwidth); % high cut-off frequency in Hz
-    halforder = 3; % half of the filter order: a value of 3 yields a 6th order filter
-
-    P_octave = zeros(length(signal2), chans, length(fc));
-    for k=1:length(fc);
-        % use filter order of 6 (half-order = 3)
-        [b, a]=butter(halforder, [f_low(k)/Nyquist f_hi(k)/Nyquist]);
-        P_octave(:,:,k)=filtfilt(b,a, signal2); % linear phase filter
-
-    end
+    % OLD OCTAVE BAND FILTERS - DO NOT USE
+    % % Define the octave band filter parameters
+    % Nyquist = fs/2;
+    % bandnumber=21:3:39; % filter band numbers
+    % fc=10.^(bandnumber./10); % filter centre frequencies in Hz
+    % bandwidth = 1; % set to 0.5 instead of 1 if you want to try half-octave bandwidths
+    % f_low=fc./10^(0.15*bandwidth); % low cut-off frequency in Hz
+    % f_hi=fc.*10^(0.15*bandwidth); % high cut-off frequency in Hz
+    % halforder = 3; % half of the filter order: a value of 3 yields a 6th order filter
+    %
+    % P_octave = zeros(length(signal2), chans, length(fc));
+    % for k=1:length(fc);
+    %     % use filter order of 6 (half-order = 3)
+    %     [b, a]=butter(halforder, [f_low(k)/Nyquist f_hi(k)/Nyquist]);
+    %     P_octave(:,:,k)=filtfilt(b,a, signal2); % linear phase filter
+    %
+    % end
     onoffratio = zeros(1,chans);
     for ch = 1:chans
         onoffratio(1,ch) = ind(ch) / length(LL.sort);
     end
+    % Define the octave band filter parameters
+    % Nyquist = fs/2;
+    % bandnumber=21:3:39; % filter band numbers
+    % fc=10.^(bandnumber./10); % filter centre frequencies in Hz
+    % bandwidth = 1; % set to 0.5 instead of 1 if you want to try half-octave bandwidths
+    % f_low=fc./10^(0.15*bandwidth); % low cut-off frequency in Hz
+    % f_hi=fc.*10^(0.15*bandwidth); % high cut-off frequency in Hz
+    % halforder = 3; % half of the filter order: a value of 3 yields a 6th order filter
+    % 
+    % P_octave = zeros(length(signal2), chans, length(fc));
+    % for k=1:length(fc);
+    %     % use filter order of 6 (half-order = 3)
+    %     [b, a]=butter(halforder, [f_low(k)/Nyquist f_hi(k)/Nyquist]);
+    %     P_octave(:,:,k)=filtfilt(b,a, signal2); % linear phase filter
+    % 
+    % end
+    % onoffratio = zeros(1,chans);
+    % for ch = 1:chans
+    %     onoffratio(1,ch) = ind(ch) / length(LL.sort);
+    % end
 
 
 
@@ -259,7 +261,7 @@ end
         + 10.^((Lspeechoct(1,:,5)+1.2)./10) ...
         + 10.^((Lspeechoct(1,:,6)+1)./10) ...
         + 10.^((Lspeechoct(1,:,7)-1.1)./10));
-    
+
     OUT = speech;
     OUT.audio = signal2;
     OUT.L = L;
@@ -271,11 +273,11 @@ end
 
     if isstruct(speech)
         doresultleaf(10*log10(I),'SPL [dB]',{'Time'},...
-                     'Time',    num2cell(((1:nwin)-1) * step / fs), 'Hz',          true,...
-                     'Channel', chanID,                             'categorical', [],...
-                     'name','Speech_level');
+            'Time',    num2cell(((1:nwin)-1) * step / fs), 'Hz',          true,...
+            'Channel', chanID,                             'categorical', [],...
+            'name','Speech_level');
     end
-    
+
     if doplot
         times = ((1:nwin)-1) * step / fs;
         ymin = floor(min(LL.sort(end,:))/10) *10;
@@ -320,71 +322,71 @@ end
             xlabel('Octave Band Centre Frequency (Hz)')
             ylabel('Speech SPL (dB)')
 
-                for k = 1:7
-                    % numbers on chart
-                    text(k-0.2,Lspeechoct(1,ch,k)-5, ...
-                        num2str(round(Lspeechoct(1,ch,k)*10)/10),'Color','y')
-                end
+            for k = 1:7
+                % numbers on chart
+                text(k-0.2,Lspeechoct(1,ch,k)-5, ...
+                    num2str(round(Lspeechoct(1,ch,k)*10)/10),'Color','y')
+            end
 
-        end  
+        end
 
         % Loop for replaying, saving and finishing
-%        choice = 0;
-%        wave = signal2./max(max(abs(signal2)));
+        %        choice = 0;
+        %        wave = signal2./max(max(abs(signal2)));
         % loop until the user presses the 'Done' button
-%        while choice < 5
-%            choice = menu('What next?', ...
-%                'Table of Results', ...
-%                'Play original', ...
-%                'Play thresholded', ...
-%                'Save wav file', ...
-%                'Done');
-%            switch choice
+        %        while choice < 5
+        %            choice = menu('What next?', ...
+        %                'Table of Results', ...
+        %                'Play original', ...
+        %                'Play thresholded', ...
+        %                'Save wav file', ...
+        %                'Done');
+        %            switch choice
 
-%                case 1
-                f = figure('Name','Operational Speech Level', ...
-                'Position',[200 200 440+60*chans 360]);
-            %[left bottom width height]
-            Loctband = permute(Lspeechoct(1,:,:),[3,2,1]);
-            dat = [L.speechJ2;L.eq;L.speechJ4;L.max;L.p5;L.p10;L.median;L.p90; ...
-                L.p95;L.min;Loctband];
-            cnames = {'SPL (dB)'};
-            rnames = {'A-Weighted Operational Speech Level J2', ...
-                'Equivalent A-weighted SPL, LA,eq', ...
-                'A-Weighted Operational Speech Level J4', ...
-                'Maximum A-weighted Level, LA,max', ...
-                '95th Percentile A-weighted, SPL LA,5', ...
-                '90th Percentile A-weighted, SPL LA,10', ...
-                'Median A-weighted SPL, LA,50', ...
-                '10th Percentile A-weighted SPL, LA,90', ...
-                '5th Percentile A-weighted SPL, LA,95', ...
-                'Minimum A-weighted SPL, LA,min', ...
-                'Octave Band SPL J2 125 Hz', ...
-                'Octave Band SPL J2 250 Hz', ...
-                'Octave Band SPL J2 500 Hz', ...
-                'Octave Band SPL J2 1 kHz', ...
-                'Octave Band SPL J2 2 kHz', ...
-                'Octave Band SPL J2 4 kHz', ...
-                'Octave Band SPL J2 8 kHz'};
-            t =uitable('Parent',f,'Data',dat,'ColumnName',cnames,...
-                'RowName',rnames,'Position',[20 20 400+60*chans 340]);
-            %set(t,'ColumnWidth',{60});
-            disptables(f,t)
+        %                case 1
+        f = figure('Name','Operational Speech Level', ...
+            'Position',[200 200 440+60*chans 360]);
+        %[left bottom width height]
+        Loctband = permute(Lspeechoct(1,:,:),[3,2,1]);
+        dat = [L.speechJ2;L.eq;L.speechJ4;L.max;L.p5;L.p10;L.median;L.p90; ...
+            L.p95;L.min;Loctband];
+        cnames = {'SPL (dB)'};
+        rnames = {'A-Weighted Operational Speech Level J2', ...
+            'Equivalent A-weighted SPL, LA,eq', ...
+            'A-Weighted Operational Speech Level J4', ...
+            'Maximum A-weighted Level, LA,max', ...
+            '95th Percentile A-weighted, SPL LA,5', ...
+            '90th Percentile A-weighted, SPL LA,10', ...
+            'Median A-weighted SPL, LA,50', ...
+            '10th Percentile A-weighted SPL, LA,90', ...
+            '5th Percentile A-weighted SPL, LA,95', ...
+            'Minimum A-weighted SPL, LA,min', ...
+            'Octave Band SPL J2 125 Hz', ...
+            'Octave Band SPL J2 250 Hz', ...
+            'Octave Band SPL J2 500 Hz', ...
+            'Octave Band SPL J2 1 kHz', ...
+            'Octave Band SPL J2 2 kHz', ...
+            'Octave Band SPL J2 4 kHz', ...
+            'Octave Band SPL J2 8 kHz'};
+        t =uitable('Parent',f,'Data',dat,'ColumnName',cnames,...
+            'RowName',rnames,'Position',[20 20 400+60*chans 340]);
+        %set(t,'ColumnWidth',{60});
+        disptables(f,t)
 
-%                case 2
-%                    wave = signal./max(max(abs(signal)));
-%                    sound(wave, fs)
-%                case 3
-%                    wave = signal2./max(max(abs(signal2)));
-%                    sound(wave, fs)
+        %                case 2
+        %                    wave = signal./max(max(abs(signal)));
+        %                    sound(wave, fs)
+        %                case 3
+        %                    wave = signal2./max(max(abs(signal2)));
+        %                    sound(wave, fs)
 
-%                case 4
-%                    [filename, pathname] = uiputfile({'*.wav'},'Save as');
-%                    if ischar(filename)
-%                        audiowrite([pathname,filename], wave, fs);
-%                    end
-%            end
-%        end
+        %                case 4
+        %                    [filename, pathname] = uiputfile({'*.wav'},'Save as');
+        %                    if ischar(filename)
+        %                        audiowrite([pathname,filename], wave, fs);
+        %                    end
+        %            end
+        %        end
 
     end
 else
@@ -395,24 +397,25 @@ end
 function y = Aweight(x, fs)
 % Filters input x with A-weighting and returns output y.
 
+% THE FOLLOWING IS NOT COMPATIBLE WITH CURRENT MATLAB VERSION
 % MATLAB Code
 % Generated by MATLAB(R) 8.1 and the DSP System Toolbox 8.4.
 % Generated on: 24-Aug-2013 14:55:39
 
-persistent Hd;
-
-if isempty(Hd)
-    
-    WT    = 'A';    % Weighting type
-    Class = 1;      % Class
-    if nargin < 2, fs    = 48000; end  % Sampling Frequency
-    
-    h = fdesign.audioweighting('WT,Class', WT, Class, fs);
-    
-     Hd = design(h, 'ansis142', ...
-         'SOSScaleNorm', 'Linf');
-end
-
-y = filter(Hd,x);
+% persistent Hd;
+%
+% if isempty(Hd)
+%
+%     WT    = 'A';    % Weighting type
+%     Class = 1;      % Class
+%     if nargin < 2, fs    = 48000; end  % Sampling Frequency
+%
+%     h = fdesign.audioweighting('WT,Class', WT, Class, fs);
+%
+%      Hd = design(h, 'ansis142', ...
+%          'SOSScaleNorm', 'Linf');
+% end
+AWeighting = weightingFilter('A-weighting',fs);
+y = AWeighting(x);
 
 end
