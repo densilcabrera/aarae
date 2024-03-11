@@ -16,7 +16,15 @@ end
 if ~isempty(audio) && ~isempty(fs)
     weightType = 'A-weighting';
     weightFilt = weightingFilter(weightType,fs);
-    audio = weightFilt(audio);
+    for d3 = 1:size(audio,3)
+        for d4 = 1:size(audio,4)
+            for d5 = 1:size(audio,5)
+                for d6 = 1:size(audio,6)
+                    audio(:,:,d3,d4,d5,d6) = weightFilt(audio(:,:,d3,d4,d5,d6));
+                end
+            end
+        end
+    end
     if isstruct(IN)
         OUT = IN;
         OUT.audio = audio;
