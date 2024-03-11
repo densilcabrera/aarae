@@ -1,6 +1,5 @@
 function OUT = Aweight(IN,fs)
-% A-weighting
-processed = [];
+% A-weighting using Matlab's Audio Toolbox
 if nargin < 2
     if isstruct(IN)
         audio = IN.audio;
@@ -15,23 +14,12 @@ else
     audio = IN;
 end
 if ~isempty(audio) && ~isempty(fs)
-    %if isdir([cd '/Processors/Filters/' num2str(fs) 'Hz'])
-    if false % bypass this code for now
-        content = load([cd '/Processors/Filters/' num2str(fs) 'Hz/A-WeightingFilter.mat']);
-        filterbank = content.filterbank;
-        processed = filter(filterbank,1,audio);
-        
-    else
-        WT    = 'A';    % Weighting type
-        Class = 1;      % Class
-        h = fdesign.audioweighting('WT,Class', WT, Class, fs);
-        Hd = design(h, 'ansis142', ...
-            'SOSScaleNorm', 'Linf');
-        processed = filter(Hd,audio);
-    end
+    weightType = 'A-weighting';
+    weightFilt = weightingFilter(weightType,fs);
+    audio = weightFilt(audio);
     if isstruct(IN)
         OUT = IN;
-        OUT.audio = processed;
+        OUT.audio = audio;
         OUT.funcallback.name = 'Aweight.m';
         OUT.funcallback.inarg = {};
     else
