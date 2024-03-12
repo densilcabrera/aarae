@@ -127,7 +127,7 @@ if ~transposesubplots
             subplot(chans,bands,k)
             [~,F,T,P] = spectrogram(audio(:,ch,b),wf,NOVERLAP,[],fs);
             L = 10*log10(abs(P));
-            centroid = sum(F*P)./sum(P);
+            centroid = sum(F.*P)./sum(P);
             if doresultsleaf==1
             if ~exist('L_all','var')
                 L_all = zeros(size(L,1),size(L,2),chans,bands);
