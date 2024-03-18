@@ -1,9 +1,47 @@
 function [OUT,varargout] = thirdoctbandfilter(IN,fs,param,method)
-B = 3;
-N = 8;
+% Implements an 8th order 1/3-octave band filterbank (by default) using the
+% Audio Toolbox's octaveFilterBank. Note that this is different to the
+% original implementation of this function, which previously used
+% fdesign.octave (now deprecated).
+%
+% This revision has removed the option of backwards-forwards double
+% filtering (previously indicated by method = 0). Use AARAE's FFT-based
+% filterbank instead for linear-phase filtering.
+%
+% The 'method' input is not available via the GUI. It has the following
+% meaning:
+%   A value >= 0 leads to forward time filtering
+%   A value < 0 leads to reverse time filtering
+%   An even value ~= 0 specifies the filter order
+%   Other values lead to the default filter order of 8
+% Default is 8th order forward time filtering (same as previous
+% implementation).
+%
+% This update includes the possibility of lower frequency filters (down to
+% 12.5 Hz). The highest available filter depends on the Nyquist frequency
+% being above the high cutoff frequency of the filter. Hence the 20 kHz
+% 1/3-octave band filter is not available for 44.1 kHz sampling rate.
+%
+% The filtered octave bands are always contiguous in this version of the
+% function (unlike the previous version). They are from the lowest to
+% highest frequency bands selected using the list dialog or the 'param'
+% input of the function. Hence the 'param' input can consist of just the
+% lowest and highest band centre frequencies e.g. [125 8000].
+%
+% Update March 2024.
 ok = 0;
-nominalfreq = [25,31.5,40,50,63,80,100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150,4000,5000,6300,8000,10000,12500,16000,20000];
-if nargin < 4, method = 0; end
+if isstruct(IN)
+    fs = IN.fs;
+end
+if ~exist('fs','var'), OUT = []; return; end
+if nargin < 4, method = 8; end % 8th order forward time filtering (same as method = 1)
+
+% find maximum viable octave band for the sampling rate
+maxbandindex = floor(pow2db(0.5*fs/10^0.05)-10);
+nominalfreq = [12.5,16,20,25,31.5,40,50,63,80,100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150,4000,5000,6300,8000,10000,12500,16000,20000];
+if maxbandindex<33
+    nominalfreq = nominalfreq(1:maxbandindex);
+end
 if nargin < 3
     param = nominalfreq;
     [S,ok] = listdlg('Name','Octave band filter input parameters',...
@@ -16,56 +54,60 @@ else
         if isempty(check), check = 0; end
         S(i) = check;
     end
-    if all(S), param = sort(param,'ascend'); ok = 1; else ok = 0; end;
+    if all(S), param = sort(param,'ascend'); ok = 1; else ok = 0; end
 end
 if isstruct(IN)
     audio = IN.audio;
     fs = IN.fs;
 elseif ~isempty(param)
     audio = IN;
-    if nargin < 2
-        fs = inputdlg({'Sampling frequency [samples/s]'},...
-            'Fs',1,{'48000'});
-        fs = str2num(char(fs));
-    end
+    % if nargin < 2
+    %     fs = inputdlg({'Sampling frequency [samples/s]'},...
+    %         'Fs',1,{'48000'});
+    %     fs = str2num(char(fs));
+    % end
+end
+if size(audio,3)>1
+    audio = sum(audio,3);
+    disp('Multiband audio has been mixed down prior to filtering')
 end
 if ~isempty(param) && ~isempty(fs)
-    if fs <= 44100, param = param(find(param<adjustF0(20000))); end
-    if ok == 1 && isdir([cd '/Processors/Filterbanks/' num2str(fs) 'Hz'])
-        content = load([cd '/Processors/Filterbanks/' num2str(fs) 'Hz/ThirdOctaveBandFilterBank.mat']);
-        filterbank = content.filterbank;
-        centerf = zeros(size(param));
-        filtered = zeros(size(audio,1),size(audio,2),length(param),...
-            size(audio,4),size(audio,5),size(audio,6));
-        for i = 1:length(param)
-            
-            centerf(i) = param(1,i);
-            %filtered(:,:,i,:,:,:) = filter(filterbank(1,S(1,i)),audio(:,:,1,:,:,:));
-            switch method
-                case -1
-                    % reverse time filter
-                    filtered(:,:,i,:,:,:) = ...
-                        flipud(filter(filterbank(1,S(1,i)),flipud(audio(:,:,1,:,:,:))));
-                case 0
-                    % double filter reverse & normal time
-                    filtered(:,:,i,:,:,:) = ...
-                        filter(filterbank(1,S(1,i)),flipud(filter(filterbank(1,S(1,i)),flipud(audio(:,:,1,:,:,:)))));
-                otherwise
-                    % normal filter
-                    filtered(:,:,i,:,:,:) = filter(filterbank(1,S(1,i)),audio(:,:,1,:,:,:));
+    if rem(method,2) == 0 && method ~= 0
+        order = abs(method);
+    else
+        order = 8; % default to 8th order filters
+    end
+
+    if method < 0
+        audio = flip(audio,1);
+    end
+
+
+    bandwidth = '1/3 octave';
+    range = [min(param)./10.^0.02 max(param)*10^0.02];
+    ref = 1000;
+    base = 10;
+    octFiltBank = octaveFilterBank(bandwidth,fs,...
+        'FrequencyRange',range,...
+        'ReferenceFrequency',ref,...
+        'FilterOrder',order,...
+        'OctaveRatioBase',base);
+    fc = info(octFiltBank).CenterFrequencies;
+    filtered = repmat(audio,[1,1,length(fc),1,1,1]); % preallocate
+
+    for d4 = 1:size(audio,4)
+        for d5 = 1:size(audio,5)
+            for d6 = 1:size(audio,6)
+                filtered(:,:,:,d4,d5,d6) = permute(octFiltBank(audio(:,:,1,d4,d5,d6)),[1,3,2,4,5,6]);
             end
         end
-    else
-        F0 = param;
-        centerf = zeros(size(param));
-        for i = 1:length(param)
-            
-            centerf(i) = param(1,i);
-            filterbank = thirdoctband(B, N, adjustF0(F0(i)), fs);
-            filtered(:,:,i,:,:,:) = filter(filterbank,audio(:,:,1,:,:,:));
-            
-        end
     end
+
+
+    if method < 0
+        filtered = flip(filtered,1);
+    end
+    centerf = param;
 else
     filtered = [];
     centerf = [];
@@ -81,66 +123,3 @@ else
 end
 varargout{1} = centerf;
 end
-
-
-function Hd = thirdoctband(B, N, F0, Fs)
-%THIRDOCTBANDFILTER Returns a discrete-time filter object.
-
-%
-% MATLAB Code
-% Generated by MATLAB(R) 7.11 and the Signal Processing Toolbox 6.14.
-%
-% Generated on: 25-Jul-2013 18:39:38
-%
-% Default parameters
-%B  = 3;      % Bands per octave
-%N  = 8;      % Order
-%F0 = 1000;   % Center frequency
-%Fs = 48000;  % Sampling Frequency
-
-h = fdesign.octave(B, 'Class 0', 'N,F0', N, F0, Fs);
-
-Hd = design(h, 'butter', ...
-    'SOSScaleNorm', 'Linf');
-
-
-end
-
-function validf = adjustF0(f0)
-% Modified from:
-
-%GETVALIDCENTERFREQUENCIES   Get the validcenterfrequencies.
-
-%   Author(s): V. Pellissier
-%   Copyright 2006 The MathWorks, Inc.
-%   $Revision: 1.1.6.1 $  $Date: 2006/10/18 03:26:31 $
-
-% and
-
-%VALIDATE   Validate the specs
-
-%   Author(s): V. Pellissier
-%   Copyright 2006 The MathWorks, Inc.
-%   $Revision: 1.1.6.2 $  $Date: 2006/11/19 21:45:20 $
-
-b = 3; % BandsPerOctave
-G = 10^(3/10);
-x = -100:135;
-if rem(b,2)
-    % b odd
-    validcenterfrequencies = 1000*(G.^((x-30)/b));
-else
-    validcenterfrequencies = 1000*(G.^((2*x-59)/(2*b)));
-end
-validcenterfrequencies(validcenterfrequencies>20000)=[]; % Upper limit 20 kHz
-validcenterfrequencies(validcenterfrequencies<20)=[];    % Lower limit 20 Hz
-
-validFreq = validcenterfrequencies;
-if isempty(find(f0 == validFreq)),
-    [~, idx] = min(abs(f0-validFreq));
-    validf = validFreq(idx);
-else
-    validf = f0;
-end
-end
-% [EOF]
