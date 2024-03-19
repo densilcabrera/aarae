@@ -117,7 +117,7 @@ else
 end
 
 
-figure('Name', titletext)
+figure('Name', titletext,'Color','w')
 
 k = 1; % subplot counter
 
@@ -142,6 +142,8 @@ if ~transposesubplots
             else
                 imagesc(T,F,L)
                 set(gca,'YDir','normal');
+                cmap = kbrgxmcyw;
+                colormap(cmap);
             end
             box('on')
             
