@@ -218,8 +218,10 @@ if strcmpi(Ltype, 'Leq')==1;
 elseif strcmpi(Ltype, 'LAeq')==1;
 
     % A-weighting filter design
-    h=fdesign.audioweighting('WT,Class', 'A', 1, fs);
-    hd=design(h);
+    % h=fdesign.audioweighting('WT,Class', 'A', 1, fs);
+    % hd=design(h);
+    weightType = 'A-weighting';
+    weightFilt = weightingFilter(weightType,fs);
 
     % Fast integration (125 ms) filter design
     E = exp(-1/(0.125*fs)); % exponential term
@@ -227,8 +229,11 @@ elseif strcmpi(Ltype, 'LAeq')==1;
     a = [1 -E];
 
     % Applying the A-weighting filter & fast integration filter
-    LA=filter(hd, signal); % apply A-weigting
+    %LA=filter(hd, signal); % apply A-weigting
+    LA = weightFilt(signal);
     LAF=filter(bb,a,abs(LA)); % rectify and apply temporal integration
+
+
     
     % Calculating the caliberation level (Cal)
     LAFmax=20*log10(mean(max(abs(LAF)))); % (mean maxima for 2-chan)
