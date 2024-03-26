@@ -290,6 +290,6 @@ ylabel('Level (dB)')
 
 msgbox({['G     ',num2str(G,3),' dB'];['T20 ',num2str(T20,3),' s'];['T30 ',num2str(T30,3),' s'];['C50 ',num2str(C50,3),' dB']},'Result')
 
-sound(out(:,1)./max(abs(out(:,1))),fs) % play normalized sound wave (ch1 only)
+%sound(out(:,1)./max(abs(out(:,1))),fs) % play normalized sound wave (ch1 only)
 
 
