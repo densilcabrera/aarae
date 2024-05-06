@@ -62,13 +62,13 @@ else
 end
 if isstruct(IN)
     audio = IN.audio;
-% elseif ~isempty(param)
-%     audio = IN;
-%     if nargin < 2
-%         fs = inputdlg({'Sampling frequency [samples/s]'},...
-%             'Fs',1,{'48000'});
-%         fs = str2num(char(fs));
-%     end
+elseif ~isempty(param)
+    audio = IN;
+    % if nargin < 2
+    %     fs = inputdlg({'Sampling frequency [samples/s]'},...
+    %         'Fs',1,{'48000'});
+    %     fs = str2num(char(fs));
+    % end
 end
 if size(audio,3)>1
     audio = sum(audio,3);
